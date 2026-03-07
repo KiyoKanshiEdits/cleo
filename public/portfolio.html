@@ -6,803 +6,186 @@
 <title>Cleo — Portfolio</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --bg:#faf6f0; --surface:#f2ece2; --border:#e0d4c0; --text:#1a1008; --text-mid:#6a5030; --text-dim:#b0956a; --cream:#f7f0e4; --gold:#c89030; --gold-soft:rgba(200,144,48,0.12); --green:#1a8a40; --green-soft:rgba(26,138,64,0.1); --red:#c84020; --red-soft:rgba(200,64,32,0.08); --accent:#6040c0; --accent-soft:rgba(96,64,192,0.1); --accent-hover:#4a2ea0; }
+body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; min-height:100vh; }
+body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); opacity:0.025; pointer-events:none; z-index:9999; }
+.page { max-width:860px; margin:0 auto; padding:0 24px 80px; }
+header { padding:28px 0 24px; border-bottom:2px solid var(--text); display:flex; justify-content:space-between; align-items:center; }
+.logo-area { display:flex; align-items:center; gap:14px; }
+.brand-name { font-size:22px; font-weight:800; letter-spacing:-0.02em; color:var(--text); }
+.brand-name span { color:var(--accent); }
+.brand-sub { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.25em; text-transform:uppercase; color:var(--text-dim); margin-top:3px; }
+.back-link { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); text-decoration:none; }
+.back-link:hover { text-decoration:underline; }
 
-  :root, [data-theme="indigo"] {
-    --bg:#faf6f0; --surface:#f2ece2; --border:#e0d4c0;
-    --text:#1a1008; --text-mid:#6a5030; --text-dim:#b0956a;
-    --cream:#f7f0e4; --gold:#c89030; --gold-soft:rgba(200,144,48,0.12);
-    --green:#1a8a40; --green-soft:rgba(26,138,64,0.1);
-    --red:#c84020; --red-soft:rgba(200,64,32,0.08);
-    --accent:#6040c0; --accent-soft:rgba(96,64,192,0.1); --accent-hover:#4a2ea0;
-    --owl-body:#4a3d7e; --owl-dark:#3a2d6e; --owl-coat:#1e1a3a; --owl-lapel:#2a2448;
-    --owl-btn:#3a3060; --owl-eye:#7060d0; --owl-iris:#ede0ff; --owl-hat-band:#7060d0;
-    --owl-notepad:#6040c0; --owl-glass:rgba(96,64,192,0.06); --owl-scan:rgba(96,64,192,0.3);
-    --owl-disc:#5a4d8e; --owl-shadow:rgba(96,64,192,0.18);
-  }
-  [data-theme="amber"] {
-    --bg:#faf6f0; --surface:#f2ece2; --border:#e0d4c0;
-    --text:#1a1008; --text-mid:#6a5030; --text-dim:#b0956a;
-    --cream:#f7f0e4; --gold:#c89030; --gold-soft:rgba(200,144,48,0.12);
-    --green:#1a8a40; --green-soft:rgba(26,138,64,0.1);
-    --red:#c84020; --red-soft:rgba(200,64,32,0.08);
-    --accent:#b87010; --accent-soft:rgba(184,112,16,0.1); --accent-hover:#8a5008;
-    --owl-body:#5a4020; --owl-dark:#4a3010; --owl-coat:#241808; --owl-lapel:#3a2810;
-    --owl-btn:#4a3818; --owl-eye:#c88020; --owl-iris:#fff8e0; --owl-hat-band:#c88020;
-    --owl-notepad:#b87010; --owl-glass:rgba(200,128,32,0.08); --owl-scan:rgba(200,128,32,0.3);
-    --owl-disc:#6a5030; --owl-shadow:rgba(184,112,16,0.18);
-  }
-  [data-theme="teal"] {
-    --bg:#faf6f0; --surface:#f2ece2; --border:#e0d4c0;
-    --text:#1a1008; --text-mid:#6a5030; --text-dim:#b0956a;
-    --cream:#f7f0e4; --gold:#c89030; --gold-soft:rgba(200,144,48,0.12);
-    --green:#1a8a40; --green-soft:rgba(26,138,64,0.1);
-    --red:#c84020; --red-soft:rgba(200,64,32,0.08);
-    --accent:#008878; --accent-soft:rgba(0,136,120,0.1); --accent-hover:#006858;
-    --owl-body:#0d3a3a; --owl-dark:#082828; --owl-coat:#071e20; --owl-lapel:#0d2e30;
-    --owl-btn:#103838; --owl-eye:#00a090; --owl-iris:#e0fff8; --owl-hat-band:#00c8b4;
-    --owl-notepad:#008878; --owl-glass:rgba(0,200,180,0.06); --owl-scan:rgba(0,200,180,0.3);
-    --owl-disc:#105858; --owl-shadow:rgba(0,136,120,0.18);
-  }
-  [data-theme="red"] {
-    --bg:#faf6f0; --surface:#f2ece2; --border:#e0d4c0;
-    --text:#1a1008; --text-mid:#6a5030; --text-dim:#b0956a;
-    --cream:#f7f0e4; --gold:#c89030; --gold-soft:rgba(200,144,48,0.12);
-    --green:#1a8a40; --green-soft:rgba(26,138,64,0.1);
-    --red:#c84020; --red-soft:rgba(200,64,32,0.08);
-    --accent:#b02030; --accent-soft:rgba(176,32,48,0.1); --accent-hover:#881020;
-    --owl-body:#4a1828; --owl-dark:#3a1020; --owl-coat:#1a0810; --owl-lapel:#240e18;
-    --owl-btn:#3a1828; --owl-eye:#c02040; --owl-iris:#ffe8e8; --owl-hat-band:#e03050;
-    --owl-notepad:#b02030; --owl-glass:rgba(220,48,80,0.06); --owl-scan:rgba(220,48,80,0.3);
-    --owl-disc:#602030; --owl-shadow:rgba(176,32,48,0.18);
-  }
-  [data-theme="sage"] {
-    --bg:#faf6f0; --surface:#f2ece2; --border:#e0d4c0;
-    --text:#1a1008; --text-mid:#6a5030; --text-dim:#b0956a;
-    --cream:#f7f0e4; --gold:#c89030; --gold-soft:rgba(200,144,48,0.12);
-    --green:#1a8a40; --green-soft:rgba(26,138,64,0.1);
-    --red:#c84020; --red-soft:rgba(200,64,32,0.08);
-    --accent:#1a7a38; --accent-soft:rgba(26,122,56,0.1); --accent-hover:#0e5828;
-    --owl-body:#1e4a20; --owl-dark:#143414; --owl-coat:#0c1e0e; --owl-lapel:#182818;
-    --owl-btn:#203820; --owl-eye:#28a048; --owl-iris:#eefff0; --owl-hat-band:#40c060;
-    --owl-notepad:#1a7a38; --owl-glass:rgba(64,192,96,0.06); --owl-scan:rgba(64,192,96,0.3);
-    --owl-disc:#2a5828; --owl-shadow:rgba(26,122,56,0.18);
-  }
-  [data-theme="violet"] {
-    --bg:#faf6f0; --surface:#f2ece2; --border:#e0d4c0;
-    --text:#1a1008; --text-mid:#6a5030; --text-dim:#b0956a;
-    --cream:#f7f0e4; --gold:#c89030; --gold-soft:rgba(200,144,48,0.12);
-    --green:#1a8a40; --green-soft:rgba(26,138,64,0.1);
-    --red:#c84020; --red-soft:rgba(200,64,32,0.08);
-    --accent:#8020a0; --accent-soft:rgba(128,32,160,0.1); --accent-hover:#601880;
-    --owl-body:#4a1e6a; --owl-dark:#3a1458; --owl-coat:#1e0e30; --owl-lapel:#2a1440;
-    --owl-btn:#3a1858; --owl-eye:#a030c0; --owl-iris:#f8e0ff; --owl-hat-band:#c050e0;
-    --owl-notepad:#8020a0; --owl-glass:rgba(160,48,192,0.06); --owl-scan:rgba(160,48,192,0.3);
-    --owl-disc:#5a2878; --owl-shadow:rgba(128,32,160,0.18);
-  }
+/* AGGREGATE BANNER */
+.aggregate-banner { margin:40px 0 32px; padding:32px 36px; background:var(--text); display:grid; grid-template-columns:1fr auto; gap:32px; align-items:center; }
+.agg-label { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:8px; }
+.agg-title { font-size:22px; font-weight:800; color:white; margin-bottom:6px; letter-spacing:-0.02em; }
+.agg-sub { font-family:'Space Mono',monospace; font-size:10px; color:rgba(255,255,255,0.45); line-height:1.6; }
+.agg-score-area { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.agg-num { font-size:48px; font-weight:800; color:var(--accent); line-height:1; }
+.agg-denom { font-family:'Space Mono',monospace; font-size:10px; color:rgba(255,255,255,0.4); }
+.agg-verdict { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.15em; text-transform:uppercase; color:white; margin-top:2px; }
 
-  /* ── THEME SWITCHER ── */
-  .theme-switcher { display:flex; align-items:center; gap:10px; }
-  .theme-label {
-    font-family:'Space Mono',monospace; font-size:9px;
-    letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim);
-  }
-  .theme-dots { display:flex; gap:6px; align-items:center; }
-  .theme-dot {
-    width:15px; height:15px; border-radius:50%; cursor:pointer;
-    border:2px solid transparent; transition:transform 0.15s, border-color 0.15s;
-  }
-  .theme-dot:hover { transform:scale(1.25); }
-  .theme-dot.active { border-color:var(--text); transform:scale(1.2); }
-  .theme-dot[data-theme="indigo"] { background:#6040c0; }
-  .theme-dot[data-theme="amber"]  { background:#b87010; }
-  .theme-dot[data-theme="teal"]   { background:#008878; }
-  .theme-dot[data-theme="red"]    { background:#b02030; }
-  .theme-dot[data-theme="sage"]   { background:#1a7a38; }
-  .theme-dot[data-theme="violet"] { background:#8020a0; }
+/* WALLET LIST */
+.section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.section-title { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:var(--text-dim); display:flex; align-items:center; gap:12px; }
+.section-title::after { content:''; flex:1; min-width:40px; height:1px; background:var(--border); }
+.clear-btn { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--red); background:none; border:1px solid var(--red); padding:5px 12px; cursor:pointer; opacity:0.7; }
+.clear-btn:hover { opacity:1; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+.wallet-list { display:grid; gap:2px; }
+.wallet-row { display:grid; grid-template-columns:auto 1fr auto auto auto; align-items:center; gap:16px; padding:16px 20px; background:var(--cream); border:1px solid transparent; transition:border-color 0.15s; }
+.wallet-row:hover { border-color:var(--border); }
+.wallet-rank { font-family:'Space Mono',monospace; font-size:10px; color:var(--text-dim); min-width:20px; }
+.wallet-info { min-width:0; }
+.wallet-address { font-family:'Space Mono',monospace; font-size:11px; color:var(--text); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:4px; }
+.wallet-finding { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-mid); line-height:1.5; }
+.wallet-date { font-family:'Space Mono',monospace; font-size:8px; color:var(--text-dim); white-space:nowrap; }
+.wallet-score-badge { font-family:'Space Mono',monospace; font-size:12px; font-weight:700; padding:4px 12px; min-width:54px; text-align:center; }
+.score-crit { background:var(--accent-soft); color:var(--accent); }
+.score-high { background:rgba(122,88,224,0.1); color:#7a58e0; }
+.score-med  { background:var(--gold-soft); color:var(--gold); }
+.score-low  { background:var(--green-soft); color:var(--green); }
+.rescan-btn { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:0.1em; text-transform:uppercase; background:none; border:1px solid var(--border); color:var(--text-mid); padding:5px 10px; cursor:pointer; white-space:nowrap; }
+.rescan-btn:hover { border-color:var(--accent); color:var(--accent); }
+.remove-btn { background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:14px; padding:4px; line-height:1; opacity:0.5; }
+.remove-btn:hover { color:var(--red); opacity:1; }
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    opacity: 0.025;
-    pointer-events: none;
-    z-index: 9999;
-  }
+/* EMPTY STATE */
+.empty-state { padding:64px 24px; text-align:center; border:1px dashed var(--border); }
+.empty-icon { font-size:32px; margin-bottom:16px; opacity:0.4; }
+.empty-title { font-size:16px; font-weight:700; color:var(--text-mid); margin-bottom:8px; }
+.empty-sub { font-family:'Space Mono',monospace; font-size:10px; color:var(--text-dim); line-height:1.7; margin-bottom:20px; }
+.empty-cta { display:inline-block; background:var(--accent); color:white; padding:10px 24px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; text-decoration:none; }
 
-  .page { max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
-
-  /* ── HEADER ── */
-  header {
-    padding: 28px 0 24px;
-    border-bottom: 2px solid var(--text);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .logo-area { display: flex; align-items: center; gap: 14px; }
-
-  .brand-name {
-    font-size: 22px; font-weight: 800; letter-spacing: -0.02em;
-    color: var(--text); line-height: 1;
-  }
-  .brand-name span { color: var(--accent); }
-
-  .brand-sub {
-    font-family: 'Space Mono', monospace; font-size: 9px;
-    letter-spacing: 0.25em; text-transform: uppercase;
-    color: var(--text-dim); margin-top: 3px;
-  }
-
-  .header-right {
-    font-family: 'Space Mono', monospace; font-size: 10px;
-    color: var(--text-dim); letter-spacing: 0.15em; text-transform: uppercase;
-  }
-
-  .back-link {
-    font-family: 'Space Mono', monospace; font-size: 10px;
-    letter-spacing: 0.1em; color: var(--text-dim);
-    text-decoration: none; transition: color 0.15s; white-space: nowrap;
-  }
-  .back-link:hover { color: var(--accent); }
-
-  /* ── SECTION TITLES ── */
-  .section-title {
-    font-family: 'Space Mono', monospace; font-size: 9px;
-    letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-dim);
-    margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
-  }
-  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-  /* ── EXPOSURE SECTION ── */
-  .exposure-section {
-    padding: 48px 0 40px;
-    border-bottom: 1px solid var(--border);
-    display: flex; flex-direction: column; align-items: center; gap: 12px;
-  }
-
-  /* ── DIAL ── */
-  .score-dial { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .dial-ring { position: relative; width: 110px; height: 110px; }
-  .dial-ring svg { width: 110px; height: 110px; transform: rotate(-90deg); }
-  .dial-num {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    font-size: 26px; font-weight: 800; color: var(--accent); line-height: 1;
-  }
-  .dial-num.teal { color: #008888; }
-  .dial-num sub {
-    font-family: 'Space Mono', monospace; font-size: 10px;
-    font-weight: 400; color: var(--text-dim); margin-top: 2px;
-  }
-  .dial-label {
-    font-family: 'Space Mono', monospace; font-size: 9px;
-    letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim);
-  }
-  .exposure-warning {
-    font-family: 'Space Mono', monospace; font-size: 10px;
-    color: var(--accent); min-height: 16px; text-align: center;
-  }
-
-  /* ── INPUT SECTION ── */
-  .input-section { padding: 40px 0 36px; border-bottom: 1px solid var(--border); }
-  .search-label {
-    font-family: 'Space Mono', monospace; font-size: 10px;
-    letter-spacing: 0.2em; text-transform: uppercase;
-    color: var(--text-dim); display: block; margin-bottom: 10px;
-  }
-  .wallet-textarea {
-    width: 100%; max-width: 620px; height: 120px;
-    border: 2px solid var(--text); padding: 14px 16px;
-    font-family: 'Space Mono', monospace; font-size: 12px;
-    color: var(--text); background: white; outline: none;
-    resize: vertical; caret-color: var(--accent); display: block;
-    line-height: 1.6;
-  }
-  .wallet-textarea::placeholder { color: var(--text-dim); }
-  .analyse-btn {
-    background: var(--accent); border: none; padding: 14px 28px;
-    font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase; color: white;
-    cursor: pointer; transition: background 0.15s; margin-top: 10px;
-    display: inline-block;
-  }
-  .analyse-btn:hover { background: var(--accent-hover); }
-  .analyse-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-  .search-hint {
-    font-family: 'Space Mono', monospace; font-size: 9px;
-    color: var(--text-dim); margin-top: 8px;
-  }
-
-  /* ── WALLET CARDS ── */
-  .wallets-section { padding: 36px 0 0; }
-  .wallet-card {
-    background: var(--cream); border: 2px solid var(--border);
-    margin-bottom: 12px; padding: 16px 18px;
-    transition: border-color 0.4s;
-  }
-  .wallet-card-header {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  }
-  .wallet-card-left {
-    display: flex; align-items: center; gap: 10px;
-    flex: 1; min-width: 0; overflow: hidden;
-  }
-  .wallet-addr {
-    font-family: 'Space Mono', monospace; font-size: 11px;
-    color: var(--text-mid); white-space: nowrap; flex-shrink: 0;
-  }
-  .score-badge {
-    font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700;
-    padding: 2px 8px; color: white; white-space: nowrap; flex-shrink: 0;
-  }
-  .top-finding-title {
-    font-family: 'Space Mono', monospace; font-size: 10px;
-    color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .wallet-card-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .toggle-btn, .remove-btn {
-    font-family: 'Space Mono', monospace; font-size: 10px;
-    padding: 4px 10px; border: 1px solid var(--border);
-    background: transparent; cursor: pointer; color: var(--text-mid);
-    transition: background 0.12s, border-color 0.12s; white-space: nowrap;
-  }
-  .toggle-btn:hover { background: var(--surface); border-color: var(--text-mid); }
-  .remove-btn { color: var(--red); border-color: transparent; }
-  .remove-btn:hover { background: var(--red-soft); border-color: var(--red); }
-
-  .wallet-card-body { margin-top: 20px; display: none; }
-  .wallet-card-body.open { display: block; }
-
-  /* ── RISK ROWS ── */
-  .risk-section-title {
-    font-family: 'Space Mono', monospace; font-size: 9px;
-    letter-spacing: 0.3em; text-transform: uppercase; color: var(--text-dim);
-    margin-bottom: 10px; display: flex; align-items: center; gap: 12px;
-  }
-  .risk-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-  .risk-rows { display: grid; gap: 2px; margin-bottom: 20px; }
-  .risk-row {
-    display: grid; grid-template-columns: 190px 1fr 40px;
-    align-items: center; gap: 14px; padding: 10px 14px;
-    background: var(--cream); border: 1px solid transparent; transition: border-color 0.15s;
-  }
-  .risk-row:hover { border-color: var(--border); }
-  .risk-name { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text-mid); }
-  .risk-bar-bg { height: 5px; background: var(--border); position: relative; overflow: hidden; }
-  .risk-bar-fill { position: absolute; left: 0; top: 0; height: 100%; }
-  .risk-bar-fill.crit { background: var(--accent); }
-  .risk-bar-fill.high { background: #7a58e0; }
-  .risk-bar-fill.med  { background: var(--gold); }
-  .risk-bar-fill.low  { background: var(--green); }
-  .risk-bar-fill.teal { background: #008888; }
-  .risk-val { font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; text-align: right; }
-  .risk-val.crit { color: var(--accent); }
-  .risk-val.high { color: #7a58e0; }
-  .risk-val.med  { color: var(--gold); }
-  .risk-val.low  { color: var(--green); }
-  .risk-val.teal { color: #008888; }
-
-  /* ── FINDINGS ── */
-  .findings { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-bottom: 12px; }
-  .finding { padding: 14px; background: var(--cream); border: 1px solid var(--border); }
-  .finding.alert { border-left: 3px solid var(--accent); background: var(--accent-soft); }
-  .finding.warn  { border-left: 3px solid var(--gold);   background: var(--gold-soft); }
-  .finding.ok    { border-left: 3px solid var(--green);  background: var(--green-soft); }
-
-  .finding-badge {
-    font-family: 'Space Mono', monospace; font-size: 8px; letter-spacing: 0.2em;
-    text-transform: uppercase; padding: 2px 7px; display: inline-block; margin-bottom: 6px;
-  }
-  .finding-badge.alert { background: var(--accent-soft); color: var(--accent); }
-  .finding-badge.warn  { background: var(--gold-soft);   color: var(--gold); }
-  .finding-badge.ok    { background: var(--green-soft);  color: var(--green); }
-
-  .finding-title  { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-  .finding-detail { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text-dim); line-height: 1.6; }
-
-  /* ── BUBBLE MAP ── */
-  .bubble-section { padding: 0 0 36px; }
-  #bubble-map-wrap {
-    background: var(--cream); border: 2px solid var(--border);
-    border-radius: 4px; overflow: hidden;
-  }
-  #bubble-svg { display: block; width: 100%; height: 260px; }
-
-  /* ── PRIVACY SECTION ── */
-  .privacy-section { padding: 36px 0 0; border-top: 1px solid var(--border); }
-  .privacy-dial-row {
-    display: flex; align-items: flex-start; gap: 40px;
-    flex-wrap: wrap; margin-bottom: 24px;
-  }
-  .privacy-sub-scores { flex: 1; min-width: 260px; }
-
-  /* Standalone speech bubble */
-  .cleo-speech {
-    background: var(--text); color: var(--bg);
-    font-family: 'Space Mono', monospace; font-size: 10px;
-    padding: 12px 16px; line-height: 1.65; display: inline-block;
-    max-width: 440px; position: relative; margin-top: 16px;
-  }
-  .cleo-speech::before {
-    content: ''; position: absolute; top: -8px; left: 20px;
-    border: 4px solid transparent; border-bottom-color: var(--text); border-top: none;
-  }
-
-  /* ── ERROR ── */
-  .error-msg {
-    font-family: 'Space Mono', monospace; font-size: 11px;
-    color: var(--red); margin-top: 10px; display: none;
-  }
-  .error-msg.visible { display: block; }
-
-  @media (max-width: 640px) {
-    .findings { grid-template-columns: 1fr; }
-    .wallet-card-left { flex-wrap: wrap; }
-    .privacy-dial-row { flex-direction: column; }
-    .risk-row { grid-template-columns: 140px 1fr 36px; }
-  }
+@media (max-width:600px) {
+  .aggregate-banner { grid-template-columns:1fr; }
+  .wallet-row { grid-template-columns:1fr auto auto; }
+  .wallet-rank, .wallet-date { display:none; }
+}
 </style>
 </head>
 <body>
 <div class="page">
-
-  <!-- HEADER -->
   <header>
-    <div style="display:flex;align-items:center;gap:20px;">
-      <a href="/" class="back-link">← Single Scan</a>
-      <div class="logo-area">
-        <svg width="40" height="46" viewBox="0 0 40 46">
-          <ellipse cx="20" cy="38" rx="11" ry="8" fill="#3a2d6e"/>
-          <path d="M9 34 Q10 28 12 26 L28 26 Q30 28 31 34 L31 42 Q25 46 20 46 Q15 46 9 42Z" fill="#1a2a40" opacity="0.9"/>
-          <ellipse cx="20" cy="18" rx="14" ry="14" fill="#4a3d7e"/>
-          <path d="M8 10 Q10 2 14 7 Q11 11 9 13Z" fill="#3a2d6e"/>
-          <path d="M32 10 Q30 2 26 7 Q29 11 31 13Z" fill="#3a2d6e"/>
-          <circle cx="14" cy="17" r="5.5" fill="#ede0ff"/>
-          <circle cx="26" cy="17" r="5.5" fill="#ede0ff"/>
-          <circle cx="14" cy="17" r="3.8" fill="#7060d0"/>
-          <circle cx="26" cy="17" r="3.8" fill="#7060d0"/>
-          <circle cx="14" cy="17" r="2.1" fill="#0d0918"/>
-          <circle cx="26" cy="17" r="2.1" fill="#0d0918"/>
-          <circle cx="14.8" cy="15.8" r="1" fill="white"/>
-          <circle cx="26.8" cy="15.8" r="1" fill="white"/>
-          <circle cx="26" cy="17" r="6.5" fill="none" stroke="#c89030" stroke-width="1.4"/>
-          <line x1="31" y1="22" x2="34" y2="27" stroke="#c89030" stroke-width="1.3"/>
-          <path d="M16.5 24 L20 28.5 L23.5 24 Q20 22 16.5 24Z" fill="#c89030"/>
-          <rect x="8" y="6" width="24" height="5" rx="1.5" fill="#12101e"/>
-          <rect x="11" y="9" width="18" height="3.5" fill="#7060d0"/>
-        </svg>
-        <div>
-          <div class="brand-name"><span>Cleo</span> · Portfolio</div>
-          <div class="brand-sub">On-chain exposure intelligence</div>
-        </div>
+    <div class="logo-area">
+      <svg width="36" height="42" viewBox="0 0 40 46">
+        <ellipse cx="20" cy="38" rx="11" ry="8" fill="#3a2d6e"/>
+        <ellipse cx="20" cy="18" rx="14" ry="14" fill="#4a3d7e"/>
+        <circle cx="14" cy="17" r="5.5" fill="#ede0ff"/><circle cx="26" cy="17" r="5.5" fill="#ede0ff"/>
+        <circle cx="14" cy="17" r="3.8" fill="#7060d0"/><circle cx="26" cy="17" r="3.8" fill="#7060d0"/>
+        <circle cx="14" cy="17" r="2.1" fill="#0d0918"/><circle cx="26" cy="17" r="2.1" fill="#0d0918"/>
+        <circle cx="14.8" cy="15.8" r="1" fill="white"/><circle cx="26.8" cy="15.8" r="1" fill="white"/>
+        <circle cx="26" cy="17" r="6.5" fill="none" stroke="#c89030" stroke-width="1.4"/>
+        <path d="M16.5 24 L20 28.5 L23.5 24 Q20 22 16.5 24Z" fill="#c89030"/>
+        <rect x="8" y="6" width="24" height="5" rx="1.5" fill="#12101e"/>
+        <rect x="11" y="9" width="18" height="3.5" fill="#7060d0"/>
+      </svg>
+      <div>
+        <div class="brand-name"><span>Cleo</span> · Portfolio</div>
+        <div class="brand-sub">Saved wallet exposure</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:16px;">
-      <div class="theme-switcher">
-        <span class="theme-label">Theme</span>
-        <div class="theme-dots">
-          <div class="theme-dot active" data-theme="indigo" title="Indigo" onclick="setTheme('indigo',this)"></div>
-          <div class="theme-dot" data-theme="amber"  title="Amber"  onclick="setTheme('amber',this)"></div>
-          <div class="theme-dot" data-theme="teal"   title="Teal"   onclick="setTheme('teal',this)"></div>
-          <div class="theme-dot" data-theme="red"    title="Red"    onclick="setTheme('red',this)"></div>
-          <div class="theme-dot" data-theme="sage"   title="Sage"   onclick="setTheme('sage',this)"></div>
-          <div class="theme-dot" data-theme="violet" title="Violet" onclick="setTheme('violet',this)"></div>
-        </div>
-      </div>
-      <div class="header-right">Solana · Live</div>
-    </div>
+    <a href="/" class="back-link">← Back to Scanner</a>
   </header>
 
-  <!-- 1. PORTFOLIO EXPOSURE SCORE -->
-  <div class="exposure-section">
-    <div class="section-title" style="align-self:stretch;margin-bottom:0;">// Portfolio Exposure Score</div>
-    <div class="score-dial">
-      <div class="dial-ring">
-        <svg viewBox="0 0 110 110">
-          <circle cx="55" cy="55" r="46" fill="none" stroke="#e0d4c0" stroke-width="5"/>
-          <circle id="agg-arc" cx="55" cy="55" r="46" fill="none" stroke="var(--accent)" stroke-width="5"
-            stroke-dasharray="289" stroke-dashoffset="289"/>
-        </svg>
-        <div class="dial-num" id="agg-num">--<sub>/100</sub></div>
-      </div>
-      <div class="dial-label">Portfolio Exposure</div>
-    </div>
-    <div class="exposure-warning" id="critical-warning"></div>
-  </div>
-
-  <!-- 2. WALLET INPUT -->
-  <div class="input-section">
-    <label class="search-label">// Add Your Wallets</label>
-    <textarea class="wallet-textarea" id="wallets-textarea"
-      placeholder="Paste wallet addresses, one per line&#10;e.g. 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU"></textarea>
+  <!-- AGGREGATE BANNER -->
+  <div class="aggregate-banner" id="aggregate-banner" style="display:none;">
     <div>
-      <button class="analyse-btn" id="analyse-btn" onclick="analyseAll()">ANALYSE ALL →</button>
+      <div class="agg-label">// Portfolio Exposure Score</div>
+      <div class="agg-title" id="agg-verdict">Calculating…</div>
+      <div class="agg-sub" id="agg-sub">Aggregate exposure across your saved wallets.</div>
     </div>
-    <div class="search-hint">// Read-only. No signatures. No tracking. Up to 5 wallets.</div>
-    <div class="error-msg" id="error-msg"></div>
-  </div>
-
-  <!-- 3. WALLET LIST -->
-  <div class="wallets-section" id="wallets-section" style="display:none;">
-    <div class="section-title">// Wallet Results</div>
-    <div id="wallet-list"></div>
-  </div>
-
-  <!-- 4. BUBBLE MAP -->
-  <div class="bubble-section" id="bubble-section" style="display:none;">
-    <div class="section-title">// Portfolio Map</div>
-    <div id="bubble-map-wrap">
-      <svg id="bubble-svg"></svg>
+    <div class="agg-score-area">
+      <div class="agg-num" id="agg-score">—</div>
+      <div class="agg-denom">/100</div>
+      <div class="agg-verdict" id="agg-label">PORTFOLIO SCORE</div>
     </div>
   </div>
 
-  <!-- 5. PRIVACY SCORE -->
-  <div class="privacy-section" id="privacy-section" style="display:none;">
-    <div class="section-title">// Privacy Score</div>
-    <div class="privacy-dial-row">
-      <div class="score-dial">
-        <div class="dial-ring">
-          <svg viewBox="0 0 110 110">
-            <circle cx="55" cy="55" r="46" fill="none" stroke="#e0d4c0" stroke-width="5"/>
-            <circle id="priv-arc" cx="55" cy="55" r="46" fill="none" stroke="#008888" stroke-width="5"
-              stroke-dasharray="289" stroke-dashoffset="289"/>
-          </svg>
-          <div class="dial-num teal" id="priv-num">--<sub>/100</sub></div>
-        </div>
-        <div class="dial-label">Privacy Score</div>
-      </div>
-      <div class="privacy-sub-scores">
-        <div class="risk-section-title">// Sub-scores</div>
-        <div class="risk-rows" id="privacy-rows">
-          <div class="risk-row">
-            <div class="risk-name">Protocol Usage</div>
-            <div class="risk-bar-bg"><div class="risk-bar-fill teal" id="bar-protocol" style="width:0%"></div></div>
-            <div class="risk-val teal" id="val-protocol">--</div>
-          </div>
-          <div class="risk-row">
-            <div class="risk-name">Funding Source</div>
-            <div class="risk-bar-bg"><div class="risk-bar-fill teal" id="bar-funding" style="width:0%"></div></div>
-            <div class="risk-val teal" id="val-funding">--</div>
-          </div>
-          <div class="risk-row">
-            <div class="risk-name">Transaction Opacity</div>
-            <div class="risk-bar-bg"><div class="risk-bar-fill teal" id="bar-opacity" style="width:0%"></div></div>
-            <div class="risk-val teal" id="val-opacity">--</div>
-          </div>
-        </div>
-        <div class="cleo-speech">"The more private your funding, the harder I find you to track."</div>
-      </div>
-    </div>
+  <!-- WALLET LIST -->
+  <div class="section-header">
+    <div class="section-title">// Saved Wallets</div>
+    <button class="clear-btn" onclick="clearAll()">Clear All</button>
   </div>
 
+  <div class="wallet-list" id="wallet-list"></div>
+
+  <div class="empty-state" id="empty-state" style="display:none;">
+    <div class="empty-icon">🔭</div>
+    <div class="empty-title">No wallets saved yet</div>
+    <div class="empty-sub">Run a scan on the main page and click<br>"Save All to Portfolio" to start tracking your exposure.</div>
+    <a href="/" class="empty-cta">Start Scanning →</a>
+  </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script>
-// ── STATE ────────────────────────────────────────────────────────────────────
-let activeWallets = []; // array of full wallet result objects
-
-// ── THEME ────────────────────────────────────────────────────────────────────
-function setTheme(t, el) {
-  document.documentElement.setAttribute('data-theme', t);
-  document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
-  el.classList.add('active');
-  // Re-render bubble map so D3 nodes pick up new accent colour
-  if (activeWallets.length > 0) renderBubbleMap();
-}
-
-// ── TIER HELPERS ─────────────────────────────────────────────────────────────
-function tierColor(score) {
-  if (score < 30) return '#1a8a40';
-  if (score < 60) return '#c89030';
-  if (score < 80) return 'var(--accent)';
-  return '#b02030';
-}
-function tierColorResolved(score) {
-  if (score < 30) return '#1a8a40';
-  if (score < 60) return '#c89030';
-  if (score < 80) return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6040c0';
-  return '#b02030';
-}
-
-// ── AGGREGATE COMPUTATION ────────────────────────────────────────────────────
-function computeAggregate(wallets) {
-  const valid = wallets.filter(w => w.score != null && !w.error);
-  if (valid.length === 0) return null;
-  let avg = valid.reduce((a, w) => a + w.score, 0) / valid.length;
-  if (valid.some(w => w.score > 70)) avg += 5;
-  return parseFloat(Math.min(Math.max(avg, 5), 98).toFixed(1));
-}
-
-function computePrivacyAggregate(wallets) {
-  const valid = wallets.filter(w => w.privacy && !w.error);
-  if (valid.length === 0) return null;
-  const avg = field =>
-    parseFloat((valid.reduce((s, w) => s + parseFloat(w.privacy[field]), 0) / valid.length).toFixed(1));
-  return {
-    total:         avg('total'),
-    protocolUsage: avg('protocolUsage'),
-    fundingSource: avg('fundingSource'),
-    opacity:       avg('opacity'),
-  };
-}
-
-// ── ANALYSE ──────────────────────────────────────────────────────────────────
-async function analyseAll() {
-  const raw = document.getElementById('wallets-textarea').value;
-  const wallets = raw.split('\n').map(s => s.trim()).filter(Boolean);
-
-  if (wallets.length === 0) { showError('Please enter at least one wallet address.'); return; }
-  if (wallets.length > 5)  { showError('Up to 5 wallets allowed.'); return; }
-
-  const btn = document.getElementById('analyse-btn');
-  btn.disabled = true;
-  btn.textContent = 'EXAMINING...';
-  hideError();
-
-  try {
-    const res = await fetch('/api/portfolio', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ wallets }),
-    });
-    if (!res.ok) throw new Error((await res.json()).error || 'Request failed');
-    const data = await res.json();
-
-    activeWallets = data.wallets;
-    renderAll();
-  } catch (err) {
-    showError(err.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'ANALYSE ALL →';
-  }
-}
-
-// ── RENDER ALL ───────────────────────────────────────────────────────────────
-function renderAll() {
-  updateAggregateDial();
-  renderWalletCards();
-  renderBubbleMap();
-  renderPrivacy();
-
-  document.getElementById('wallets-section').style.display = activeWallets.length > 0 ? 'block' : 'none';
-  document.getElementById('bubble-section').style.display  = activeWallets.length > 0 ? 'block' : 'none';
-  document.getElementById('privacy-section').style.display = activeWallets.length > 0 ? 'block' : 'none';
-}
-
-// ── AGGREGATE DIAL ───────────────────────────────────────────────────────────
-function updateAggregateDial() {
-  const agg = computeAggregate(activeWallets);
-  const numEl = document.getElementById('agg-num');
-  const arcEl = document.getElementById('agg-arc');
-  const warnEl = document.getElementById('critical-warning');
-  const C = 289;
-
-  if (agg === null) {
-    numEl.innerHTML = '--<sub>/100</sub>';
-    arcEl.setAttribute('stroke-dashoffset', C);
-    warnEl.textContent = '';
-  } else {
-    numEl.innerHTML = agg + '<sub>/100</sub>';
-    arcEl.setAttribute('stroke-dashoffset', Math.round(C - (agg / 100) * C));
-    const hasCritical = activeWallets.filter(w => !w.error).some(w => w.score > 70);
-    warnEl.textContent = hasCritical ? '// One or more wallets carries critical exposure' : '';
-  }
-}
-
-// ── WALLET CARDS ─────────────────────────────────────────────────────────────
-function renderWalletCards() {
+function load() {
+  const data = JSON.parse(localStorage.getItem('cleoPortfolio') || '[]');
   const list = document.getElementById('wallet-list');
-  list.innerHTML = activeWallets.map(w => walletCardHTML(w)).join('');
-}
+  const empty = document.getElementById('empty-state');
+  const banner = document.getElementById('aggregate-banner');
 
-function walletCardHTML(w) {
-  const addr = w.wallet;
-  const short = addr.slice(0, 8) + '...' + addr.slice(-8);
-  const id = 'card-' + addr;
-
-  if (w.error) {
-    return `<div class="wallet-card" id="${id}" data-wallet="${addr}">
-      <div class="wallet-card-header">
-        <div class="wallet-card-left">
-          <span class="wallet-addr">${short}</span>
-          <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--red);">// Error: ${escHtml(w.error)}</span>
-        </div>
-        <div class="wallet-card-actions">
-          <button class="remove-btn" onclick="removeWallet('${escAttr(addr)}')">✕ Remove</button>
-        </div>
-      </div>
-    </div>`;
-  }
-
-  const color = tierColor(w.score);
-  const topFinding = w.findings && w.findings.length > 0 ? w.findings[0].title : '';
-
-  return `<div class="wallet-card" id="${id}" data-wallet="${addr}">
-    <div class="wallet-card-header">
-      <div class="wallet-card-left">
-        <span class="wallet-addr">${short}</span>
-        <span class="score-badge" style="background:${color};">${w.score}</span>
-        <span class="top-finding-title">${escHtml(topFinding)}</span>
-      </div>
-      <div class="wallet-card-actions">
-        <button class="toggle-btn" id="toggle-${escAttr(addr)}" onclick="toggleCard('${escAttr(addr)}')">▼ Details</button>
-        <button class="remove-btn" onclick="removeWallet('${escAttr(addr)}')">✕ Remove</button>
-      </div>
-    </div>
-    <div class="wallet-card-body" id="body-${escAttr(addr)}">
-      <div class="risk-section-title">// Risk Breakdown</div>
-      <div class="risk-rows">
-        ${(w.risks || []).map(r => `
-          <div class="risk-row">
-            <div class="risk-name">${escHtml(r.name)}</div>
-            <div class="risk-bar-bg"><div class="risk-bar-fill ${r.tier}" style="width:${r.value}%"></div></div>
-            <div class="risk-val ${r.tier}">${r.value}</div>
-          </div>`).join('')}
-      </div>
-      <div class="risk-section-title">// Findings</div>
-      <div class="findings">
-        ${(w.findings || []).map(f => `
-          <div class="finding ${f.type}">
-            <div class="finding-badge ${f.type}">${escHtml(f.badge)}</div>
-            <div class="finding-title">${escHtml(f.title)}</div>
-            <div class="finding-detail">${escHtml(f.detail)}</div>
-          </div>`).join('')}
-      </div>
-    </div>
-  </div>`;
-}
-
-function toggleCard(addr) {
-  const body   = document.getElementById('body-' + addr);
-  const btn    = document.getElementById('toggle-' + addr);
-  const isOpen = body.classList.contains('open');
-  body.classList.toggle('open', !isOpen);
-  btn.textContent = isOpen ? '▼ Details' : '▲ Close';
-}
-
-function removeWallet(addr) {
-  activeWallets = activeWallets.filter(w => w.wallet !== addr);
-  renderAll();
-}
-
-// ── BUBBLE MAP ───────────────────────────────────────────────────────────────
-function renderBubbleMap() {
-  const svg = d3.select('#bubble-svg');
-  svg.selectAll('*').remove();
-
-  const wrap  = document.getElementById('bubble-map-wrap');
-  const width = wrap.clientWidth || 800;
-  const height = 260;
-  const cx = width / 2, cy = 130;
-  const orbitR = Math.min(width / 2 - 60, 95);
-
-  svg.attr('width', width).attr('height', height);
-
-  const wallets = activeWallets.filter(w => !w.error && w.score != null);
-
-  // Lines first (behind nodes)
-  wallets.forEach((w, i) => {
-    const angle = wallets.length === 1
-      ? -Math.PI / 2
-      : (i / wallets.length) * 2 * Math.PI - Math.PI / 2;
-    const nx = cx + Math.cos(angle) * orbitR;
-    const ny = cy + Math.sin(angle) * orbitR;
-    w._x = nx; w._y = ny;
-
-    svg.append('line')
-      .attr('x1', cx).attr('y1', cy)
-      .attr('x2', nx).attr('y2', ny)
-      .attr('stroke', '#e0d4c0')
-      .attr('stroke-width', 1);
-  });
-
-  // Hub
-  svg.append('circle').attr('cx', cx).attr('cy', cy).attr('r', 28).attr('fill', '#888');
-  svg.append('text')
-    .attr('x', cx).attr('y', cy + 4)
-    .attr('text-anchor', 'middle')
-    .attr('fill', 'white')
-    .attr('font-size', '9px')
-    .attr('font-family', 'Space Mono, monospace')
-    .text('Portfolio');
-
-  // Wallet nodes
-  wallets.forEach(w => {
-    const r = Math.min(Math.max(20 + (w.score / 100) * 28, 20), 48);
-    const color = tierColorResolved(w.score);
-    const label = w.wallet.slice(0, 6) + '...' + w.wallet.slice(-4);
-
-    svg.append('circle')
-      .attr('cx', w._x).attr('cy', w._y).attr('r', r)
-      .attr('fill', color).attr('opacity', 0.85)
-      .attr('cursor', 'pointer')
-      .on('click', () => scrollToWallet(w.wallet));
-
-    svg.append('text')
-      .attr('x', w._x).attr('y', w._y + 4)
-      .attr('text-anchor', 'middle')
-      .attr('fill', 'white')
-      .attr('font-size', '9px')
-      .attr('font-family', 'Space Mono, monospace')
-      .attr('pointer-events', 'none')
-      .text(label);
-  });
-}
-
-function scrollToWallet(addr) {
-  const card = document.getElementById('card-' + addr);
-  if (!card) return;
-  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  card.style.borderColor = '#f0c040';
-  setTimeout(() => { card.style.borderColor = ''; }, 1200);
-}
-
-// ── PRIVACY ──────────────────────────────────────────────────────────────────
-function renderPrivacy() {
-  const priv = computePrivacyAggregate(activeWallets);
-  const C = 289;
-
-  if (!priv) {
-    document.getElementById('priv-num').innerHTML = '--<sub>/100</sub>';
-    document.getElementById('priv-arc').setAttribute('stroke-dashoffset', C);
-    ['protocol', 'funding', 'opacity'].forEach(k => {
-      document.getElementById('bar-' + k).style.width = '0%';
-      document.getElementById('val-' + k).textContent = '--';
-    });
+  if (data.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    banner.style.display = 'none';
     return;
   }
 
-  document.getElementById('priv-num').innerHTML = priv.total + '<sub>/100</sub>';
-  document.getElementById('priv-arc').setAttribute(
-    'stroke-dashoffset', Math.round(C - (priv.total / 100) * C)
-  );
+  empty.style.display = 'none';
+  banner.style.display = 'grid';
 
-  document.getElementById('bar-protocol').style.width = priv.protocolUsage + '%';
-  document.getElementById('val-protocol').textContent = priv.protocolUsage;
+  // Aggregate score
+  const avg = Math.round(data.reduce((s, w) => s + (w.score || 0), 0) / data.length);
+  document.getElementById('agg-score').textContent = avg;
+  const v = avg >= 75 ? 'CRITICAL EXPOSURE' : avg >= 50 ? 'HIGH EXPOSURE' : avg >= 25 ? 'MODERATE EXPOSURE' : 'LOW EXPOSURE';
+  document.getElementById('agg-verdict').textContent = v;
+  document.getElementById('agg-sub').textContent = `${data.length} wallet${data.length > 1 ? 's' : ''} tracked · average Lens Score across portfolio`;
 
-  document.getElementById('bar-funding').style.width = priv.fundingSource + '%';
-  document.getElementById('val-funding').textContent = priv.fundingSource;
+  // Sort by score descending
+  const sorted = [...data].sort((a, b) => (b.score || 0) - (a.score || 0));
 
-  document.getElementById('bar-opacity').style.width = priv.opacity + '%';
-  document.getElementById('val-opacity').textContent = priv.opacity;
+  list.innerHTML = sorted.map((w, i) => {
+    const short = w.address.slice(0, 8) + '...' + w.address.slice(-8);
+    const score = w.score || 0;
+    const cls = score >= 75 ? 'score-crit' : score >= 50 ? 'score-high' : score >= 25 ? 'score-med' : 'score-low';
+    const date = w.savedAt ? new Date(w.savedAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short' }) : '—';
+    return `<div class="wallet-row">
+      <div class="wallet-rank">${String(i+1).padStart(2,'0')}</div>
+      <div class="wallet-info">
+        <div class="wallet-address">${short}</div>
+        <div class="wallet-finding">${w.topFinding || '—'}</div>
+      </div>
+      <div class="wallet-date">${date}</div>
+      <div class="wallet-score-badge ${cls}">${score}</div>
+      <button class="rescan-btn" onclick="rescan('${w.address}')">Re-scan →</button>
+      <button class="remove-btn" onclick="remove('${w.address}')" title="Remove">×</button>
+    </div>`;
+  }).join('');
 }
 
-// ── HELPERS ──────────────────────────────────────────────────────────────────
-function showError(msg) {
-  const el = document.getElementById('error-msg');
-  el.textContent = '// ' + msg;
-  el.classList.add('visible');
-}
-function hideError() {
-  document.getElementById('error-msg').classList.remove('visible');
-}
-function escHtml(s) {
-  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function escAttr(s) {
-  return String(s ?? '').replace(/'/g, "\\'");
+function remove(address) {
+  const data = JSON.parse(localStorage.getItem('cleoPortfolio') || '[]');
+  localStorage.setItem('cleoPortfolio', JSON.stringify(data.filter(w => w.address !== address)));
+  load();
 }
 
-// Re-draw bubble map on resize
-let resizeTimer;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => { if (activeWallets.length > 0) renderBubbleMap(); }, 150);
-});
+function clearAll() {
+  if (confirm('Remove all saved wallets from portfolio?')) {
+    localStorage.removeItem('cleoPortfolio');
+    load();
+  }
+}
+
+function rescan(address) {
+  window.location.href = `/?wallet=${encodeURIComponent(address)}`;
+}
+
+load();
 </script>
 </body>
 </html>
