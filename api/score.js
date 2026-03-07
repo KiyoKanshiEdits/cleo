@@ -1,5 +1,23 @@
 import fetch from 'node-fetch';
 
+// ── CACHE ─────────────────────────────────────────────────────────────────────
+const cache = new Map();
+const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
+// Version stamp — bump this to auto-invalidate all cached results on redeploy
+const CACHE_VERSION = '2025-03-v4';
+
+export function getCached(wallet) {
+  const entry = cache.get(wallet);
+  if (!entry) return null;
+  if (entry.version !== CACHE_VERSION) { cache.delete(wallet); return null; }
+  if (Date.now() - entry.ts > CACHE_TTL) { cache.delete(wallet); return null; }
+  return entry.data;
+}
+
+export function setCached(wallet, data) {
+  cache.set(wallet, { data, ts: Date.now(), version: CACHE_VERSION });
+}
+
 const HELIUS_BASE = 'https://api.helius.xyz/v0';
 
 // ── KNOWN ADDRESSES ──────────────────────────────────────────────────────────
@@ -26,29 +44,40 @@ const DEX_PROGRAMS = new Set([
 ]);
 
 // ── PRIVACY PROTOCOL PROGRAM IDs ─────────────────────────────────────────────
-// Tier 1: Strong — ZK/MPC shielded pools (deposit breaks link entirely)
+// Tier 1: Strong — ZK/MPC shielded pools
 const PRIVACY_STRONG = new Set([
-  'ELUSVetDERksBHBKiHUNXzZsMgHGr6fMBNNdtBxwFY3e', // Elusiv (legacy, ZK)
+  'ELUSVetDERksBHBKiHUNXzZsMgHGr6fMBNNdtBxwFY3e', // Elusiv (legacy ZK)
   'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMts',  // Light Protocol (ZK)
-  'ARCiUMGAQeXARCiUMGAQeXARCiUMiUMGAQeXARCiUM11', // Arcium/Umbra (MPC) - placeholder until mainnet addr confirmed
 ]);
 
-// Tier 2: Moderate — privacy-routed swaps, mixers
+// Tier 2: Moderate — privacy-routed swaps
 const PRIVACY_MODERATE = new Set([
-  'VNSHxTRDKmQFxyFHRDQNFoKJBdAnFxHmVaNMXxJzWeP',  // Vanish protocol
-  'PCASHxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',  // PrivacyCash (placeholder)
+  'vanshF62ku4jVVdf8DS47SXuJC1rq8qokGSANAomhey',  // Vanish: Trading Program (confirmed on-chain)
   'ENCRtrade111111111111111111111111111111111111',   // encrypt.trade (placeholder)
 ]);
 
-// Tier 3: Mild — cross-chain bridges (break Solana trail)
+// Vanish trading pool accounts — funds sitting in these = privacy interaction
+// Even if the program ID doesn't appear, transfers to/from these accounts = Vanish usage
+const VANISH_ACCOUNTS = new Set([
+  '7ozoNcVqgptbAUHjLR1vNHgEfKiE5aYufStEHzJhxKeG', // Vanish: Trading Account #1
+  'DM1kVwqbNJYeDgKn2T3UbCHqquSh3PAYHJpRYfTCcbrK', // Vanish: Trading Account #2
+  '2bxLnNUgnbf7d4CX4sfdY2YoJkKirNc5FHE6awRwKKYY', // Vanish: Trading Account #3
+  '3PMpWWXCVUrkhHpFWPH1prxBYxQ4SV4rucJchYRSBojH', // Vanish: Trading Account #4
+  '8MjKXQgj97NPVNhj9gJrQNP7BibGCGkFMVJ2qZsC58E',  // Vanish: Trading Account #5
+  'Evamno6in8wQGBKUnVbu3FQV5eNwn2ttE5456yDbnodR',  // Vanish: Trading Account #6
+  '49zHSpdFZaSc92ygkooaMGVeeriLSXX5ujriDWVxTwVS',  // Vanish: Trading Account #7
+  '37p56C7BLiMyG2jEa7zTNSewj94C34SuFEnxnRZ87kWw',  // Vanish: Trading Account #8
+  '2QbCx4cTy11nv5FieXJkAKPvSVGdFcZPFdDMTo9vEfqm',  // Vanish: Trading Account #9
+  '7juKfkXpvYHqjhxwK1Se2Mod96hHETHNduC9BMxBdxyt',  // Vanish: Trading Account #10
+]);
+
+// Tier 3: Mild — cross-chain bridges
 const BRIDGE_STRONG = new Set([
-  'THORChain111111111111111111111111111111111111',   // THORChain router (cross-chain)
-  'SimpleSwap11111111111111111111111111111111111',   // SimpleSwap (cross-chain)
   'DZnkkTmCiFWfYTfT47X9hLygM9L3tRUvhBGsJYbdN5d',  // deBridge
 ]);
 
 const BRIDGE_WEAK = new Set([
-  'worm2ZoG2kUd4vFXhvjh93UUH596ayRfgQ2MgjNMTth',  // Wormhole (same-chain wrapping)
+  'worm2ZoG2kUd4vFXhvjh93UUH596ayRfgQ2MgjNMTth',  // Wormhole
   'Bridge1p5gheXUvJ6jGWGeCsgPKgnE3YgdGKd6mmERE',   // Allbridge
 ]);
 
@@ -169,7 +198,16 @@ function scorePrivacy(txns, walletAddress) {
 
   // 1. Protocol usage — what protocols did they use and how strong
   const strongTxns = txns.filter(tx => tx.accountData?.some(a => PRIVACY_STRONG.has(a.account)));
-  const moderateTxns = txns.filter(tx => tx.accountData?.some(a => PRIVACY_MODERATE.has(a.account)));
+  // Vanish: detect via program ID OR via transfers to/from known trading pool accounts
+  const vanishProgramTxns = txns.filter(tx => tx.accountData?.some(a => PRIVACY_MODERATE.has(a.account)));
+  const vanishAccountTxns = txns.filter(tx =>
+    (tx.nativeTransfers||[]).some(t => VANISH_ACCOUNTS.has(t.toUserAccount) || VANISH_ACCOUNTS.has(t.fromUserAccount)) ||
+    (tx.tokenTransfers||[]).some(t => VANISH_ACCOUNTS.has(t.toUserAccount) || VANISH_ACCOUNTS.has(t.fromUserAccount)) ||
+    (tx.accountData||[]).some(a => VANISH_ACCOUNTS.has(a.account))
+  );
+  // Combine — dedupe by signature
+  const vanishSigs = new Set([...vanishProgramTxns, ...vanishAccountTxns].map(t => t.signature));
+  const moderateTxns = txns.filter(tx => vanishSigs.has(tx.signature));
   const bridgeStrongTxns = txns.filter(tx => tx.accountData?.some(a => BRIDGE_STRONG.has(a.account)));
   const bridgeWeakTxns = txns.filter(tx => tx.accountData?.some(a => BRIDGE_WEAK.has(a.account)));
   const cexTxns = txns.filter(tx =>
@@ -291,12 +329,65 @@ function scorePrivacy(txns, walletAddress) {
 
   // Build detail labels for UI
   const protocolsUsed = [];
-  if (strongTxns.length > 0) protocolsUsed.push(`${strongTxns.length}× ZK/MPC shielded`);
-  if (moderateTxns.length > 0) protocolsUsed.push(`${moderateTxns.length}× privacy swap`);
-  if (bridgeStrongTxns.length > 0) protocolsUsed.push(`${bridgeStrongTxns.length}× cross-chain bridge`);
+  if (strongTxns.length > 0) protocolsUsed.push(`${strongTxns.length}× ZK/MPC shielded (Elusiv)`);
+  if (moderateTxns.length > 0) protocolsUsed.push(`${moderateTxns.length}× Vanish`);
+  if (bridgeStrongTxns.length > 0) protocolsUsed.push(`${bridgeStrongTxns.length}× cross-chain bridge (deBridge)`);
   if (bridgeWeakTxns.length > 0) protocolsUsed.push(`${bridgeWeakTxns.length}× wrapped bridge`);
   if (cexTxns.length > 0) protocolsUsed.push(`${cexTxns.length}× CEX`);
   if (protocolsUsed.length === 0) protocolsUsed.push('None detected');
+
+  // Build per-category explanations for the expandable UI
+  const privacyExplain = {};
+
+  // Protocol Usage explanation
+  if (protocolsUsed[0] === 'None detected') {
+    privacyExplain.protocolUsage = 'No interactions with known privacy protocols (Elusiv, Arcium, Vanish, PrivacyCash, encrypt.trade, cross-chain bridges) were found in the last 100 transactions.';
+  } else {
+    const parts = [];
+    if (strongTxns.length > 0) parts.push(`${strongTxns.length} ZK/MPC shielded transaction${strongTxns.length > 1 ? 's' : ''} (Elusiv/Arcium) — strongest on-chain privacy`);
+    if (moderateTxns.length > 0) parts.push(`${moderateTxns.length} Vanish interaction${moderateTxns.length > 1 ? 's' : ''} — funds routed through Vanish privacy pool`);
+    if (bridgeStrongTxns.length > 0) parts.push(`${bridgeStrongTxns.length} cross-chain bridge${bridgeStrongTxns.length > 1 ? 's' : ''} (THORChain/deBridge) — breaks Solana trail entirely`);
+    if (bridgeWeakTxns.length > 0) parts.push(`${bridgeWeakTxns.length} same-chain bridge${bridgeWeakTxns.length > 1 ? 's' : ''} (Wormhole) — mild obfuscation only`);
+    if (cexTxns.length > 0) parts.push(`${cexTxns.length} CEX deposit${cexTxns.length > 1 ? 's' : ''} — used as bridge`);
+    privacyExplain.protocolUsage = parts.join('. ') + '.';
+  }
+
+  // Timing explanation
+  if (privacyTimestamps.length === 0) {
+    privacyExplain.timingEntropy = 'No privacy protocol activity found — no timing gap to evaluate.';
+  } else if (privacyTimestamps.length === 1) {
+    privacyExplain.timingEntropy = 'One privacy interaction found with no corresponding withdrawal visible on-chain. Funds appear to still be in the shielded pool — no linkable deposit/withdrawal pair exists.';
+  } else {
+    const gapDays = ((privacyTimestamps[privacyTimestamps.length-1] - privacyTimestamps[0]) / 86400).toFixed(1);
+    privacyExplain.timingEntropy = `${privacyTimestamps.length} privacy interactions spanning ${gapDays} days. ${timingScore >= 65 ? 'Time gaps are large enough to make deposit/withdrawal correlation difficult.' : 'Interactions are close together in time — same-day activity can still be correlated.'}`;
+  }
+
+  // Amount obfuscation explanation
+  if (allTransferAmounts.length === 0) {
+    privacyExplain.amountObfuscation = 'No transfer history found — nothing to fingerprint by amount.';
+  } else if (allTransferAmounts.length <= 3) {
+    privacyExplain.amountObfuscation = `Only ${allTransferAmounts.length} transfer${allTransferAmounts.length > 1 ? 's' : ''} in history — very low surface area for amount-based linking.`;
+  } else {
+    const max = Math.max(...allTransferAmounts);
+    const min = Math.min(...allTransferAmounts);
+    privacyExplain.amountObfuscation = `${allTransferAmounts.length} transfers ranging from ${(min/1e9).toFixed(3)} to ${(max/1e9).toFixed(3)} SOL. ${amountScore >= 70 ? 'High variance makes amount-based correlation difficult.' : amountScore >= 50 ? 'Moderate variance — some amount patterns are detectable.' : 'Low variance — uniform amounts make deposit/withdrawal matching easier.'}`;
+  }
+
+  // Address diversity explanation
+  if (txns.length === 0) {
+    privacyExplain.addressReuse = 'No transaction history — completely clean address with no reuse possible.';
+  } else {
+    privacyExplain.addressReuse = `Interacted with ${allCounterparties.size} unique counterparties across ${txns.length} transactions. ${addressReuseScore >= 70 ? 'High diversity — hard to fingerprint by interaction patterns.' : addressReuseScore >= 40 ? 'Moderate diversity — some repeated counterparties exist.' : 'Low diversity — repeated interactions with the same addresses create a traceable pattern.'}`;
+  }
+
+  // Funding diversity explanation
+  if (fundingSources.size === 0) {
+    privacyExplain.fundingDiversity = 'No inbound transfers found — wallet origin is not yet visible on-chain.';
+  } else if (fundedViaPrivacy) {
+    privacyExplain.fundingDiversity = `Funded via a privacy protocol interaction — the originating wallet is shielded from direct on-chain linkage.`;
+  } else {
+    privacyExplain.fundingDiversity = `Funded from ${fundingSources.size} distinct source${fundingSources.size > 1 ? 's' : ''}. ${fundingScore >= 60 ? 'Multiple sources make origin tracing harder.' : 'Single traceable funding source — origin wallet is directly linkable on-chain.'}`;
+  }
 
   return {
     total: Math.min(total, 98).toFixed(1),
@@ -306,6 +397,7 @@ function scorePrivacy(txns, walletAddress) {
     addressReuse: addressReuseScore.toFixed(1),
     fundingDiversity: fundingScore.toFixed(1),
     protocolsUsed,
+    privacyExplain,
     // legacy fields for portfolio page compat
     fundingSource: fundingScore.toFixed(1),
     opacity: timingScore.toFixed(1),

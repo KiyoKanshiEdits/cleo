@@ -361,26 +361,107 @@ function makeDial(score, idSuffix) {
   </div>`;
 }
 
-function renderPrivacyCard(p) {
+let _privacyExpandState = {};
+
+function togglePrivacyRow(id) {
+  const el = document.getElementById('priv-expand-' + id);
+  const arrow = document.getElementById('priv-arrow-' + id);
+  if (!el) return;
+  const open = el.style.display === 'block';
+  el.style.display = open ? 'none' : 'block';
+  arrow.textContent = open ? '▸' : '▾';
+}
+
+function renderPrivacyCard(p, cardIdx) {
+  const uid = cardIdx + '-' + Date.now();
   const rows = [
-    { name: 'Protocol Usage',     value: parseFloat(p.protocolUsage   || 0) },
-    { name: 'Timing Entropy',     value: parseFloat(p.timingEntropy   || p.opacity || 0) },
-    { name: 'Amount Obfuscation', value: parseFloat(p.amountObfuscation || 0) },
-    { name: 'Address Diversity',  value: parseFloat(p.addressReuse    || 0) },
-    { name: 'Funding Diversity',  value: parseFloat(p.fundingDiversity || p.fundingSource || 0) },
+    {
+      key: 'protocol',
+      name: 'Protocol Usage',
+      value: parseFloat(p.protocolUsage || 0),
+      explanation: p.privacyExplain?.protocolUsage || (
+        parseFloat(p.protocolUsage) > 0
+          ? `Interacted with ${(p.protocolsUsed||[]).filter(x=>x!=='None detected').join(', ') || 'privacy protocols'}.`
+          : 'No known privacy protocol interactions detected in the last 100 transactions.'
+      ),
+    },
+    {
+      key: 'timing',
+      name: 'Timing Entropy',
+      value: parseFloat(p.timingEntropy || p.opacity || 0),
+      explanation: p.privacyExplain?.timingEntropy || (
+        parseFloat(p.timingEntropy || p.opacity) >= 75
+          ? 'Privacy protocol interactions are well-spaced over time — difficult to correlate deposits and withdrawals.'
+          : parseFloat(p.timingEntropy || p.opacity) >= 45
+          ? 'Some time gap between privacy interactions, but same-day activity leaves timing patterns.'
+          : 'No privacy protocol activity detected, or interactions are too close together to obscure timing.'
+      ),
+    },
+    {
+      key: 'amount',
+      name: 'Amount Obfuscation',
+      value: parseFloat(p.amountObfuscation || 0),
+      explanation: p.privacyExplain?.amountObfuscation || (
+        parseFloat(p.amountObfuscation) >= 70
+          ? 'Transfer amounts are highly varied — hard to link deposits to withdrawals by size.'
+          : parseFloat(p.amountObfuscation) >= 50
+          ? 'Moderate variation in transfer sizes. Some amount-based correlation is possible.'
+          : 'Transfer amounts are uniform or sparse — amounts could be used to link on-chain activity.'
+      ),
+    },
+    {
+      key: 'address',
+      name: 'Address Diversity',
+      value: parseFloat(p.addressReuse || 0),
+      explanation: p.privacyExplain?.addressReuse || (
+        parseFloat(p.addressReuse) >= 70
+          ? 'Interacts with many unique counterparties — low address reuse makes fingerprinting harder.'
+          : parseFloat(p.addressReuse) >= 40
+          ? 'Moderate counterparty diversity. Some repeated interactions with the same addresses.'
+          : 'High address reuse detected — repeated interactions with the same counterparties create a traceable pattern.'
+      ),
+    },
+    {
+      key: 'funding',
+      name: 'Funding Diversity',
+      value: parseFloat(p.fundingDiversity || p.fundingSource || 0),
+      explanation: p.privacyExplain?.fundingDiversity || (
+        parseFloat(p.fundingDiversity || p.fundingSource) >= 80
+          ? 'Funded via a privacy protocol or multiple independent sources — origin is well-obscured.'
+          : parseFloat(p.fundingDiversity || p.fundingSource) >= 45
+          ? 'Funded from a small number of sources. Some traceability to origin wallets.'
+          : 'Funded from a single traceable source — easy to link to an originating wallet.'
+      ),
+    },
   ];
-  const protocols = (p.protocolsUsed && p.protocolsUsed.length > 0)
+
+  const protocols = (p.protocolsUsed && p.protocolsUsed.filter(x => x !== 'None detected').length > 0)
     ? p.protocolsUsed.join('  ·  ')
     : 'None detected';
+
   return `
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
-      <div class="risk-section-title" style="color:#008878;">// Privacy Score &nbsp;<span style="background:#008878;color:white;font-family:'Space Mono',monospace;font-size:8px;padding:2px 8px;font-weight:400;">${parseFloat(p.total).toFixed(1)}/100</span></div>
+      <div class="risk-section-title" style="color:#008878;">
+        // Privacy Score &nbsp;<span style="background:#008878;color:white;font-family:'Space Mono',monospace;font-size:8px;padding:2px 8px;font-weight:400;">${parseFloat(p.total).toFixed(1)}/100</span>
+      </div>
       <div style="display:grid;gap:2px;margin-bottom:8px;">
-        ${rows.map(r => `<div class="risk-row">
-          <div class="risk-name">${r.name}</div>
-          <div class="risk-bar-bg"><div class="privacy-bar-fill" style="width:${r.value}%"></div></div>
-          <div class="privacy-val">${r.value.toFixed(1)}</div>
-        </div>`).join('')}
+        ${rows.map((r, i) => {
+          const rowId = uid + '-' + r.key;
+          return `
+          <div style="background:white;border:1px solid transparent;cursor:pointer;" onclick="togglePrivacyRow('${rowId}')">
+            <div class="risk-row" style="border:none;background:transparent;">
+              <div class="risk-name" style="display:flex;align-items:center;gap:6px;">
+                <span id="priv-arrow-${rowId}" style="color:#008878;font-size:10px;width:10px;">▸</span>
+                ${r.name}
+              </div>
+              <div class="risk-bar-bg"><div class="privacy-bar-fill" style="width:${r.value}%"></div></div>
+              <div class="privacy-val">${r.value.toFixed(1)}</div>
+            </div>
+            <div id="priv-expand-${rowId}" style="display:none;padding:8px 14px 10px 32px;font-family:'Space Mono',monospace;font-size:9px;color:var(--text-mid);line-height:1.7;border-top:1px solid var(--border);background:rgba(0,136,120,0.03);">
+              ${r.explanation}
+            </div>
+          </div>`;
+        }).join('')}
       </div>
       <div class="privacy-protocols"><span style="color:var(--text-dim);letter-spacing:0.15em;font-size:8px;">// PROTOCOLS  </span>${protocols}</div>
     </div>`;
@@ -410,7 +491,7 @@ function renderResults(results) {
         </div>
         <div class="risk-section-title">// Specific Findings</div>
         <div class="findings">${renderFindings(d.findings)}</div>
-        ${d.privacy ? renderPrivacyCard(d.privacy) : ''}
+        ${d.privacy ? renderPrivacyCard(d.privacy, i) : ''}
       </div>
     </div>`;
   }).join('');
