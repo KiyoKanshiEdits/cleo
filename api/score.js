@@ -188,69 +188,97 @@ function scorePrivacy(txns, walletAddress) {
   protocolScore = Math.min(protocolScore, 95);
 
   // 2. Timing entropy — time between deposits and withdrawals from privacy protocols
-  // Longer gap = harder to link. We look at gaps between consecutive privacy txns.
-  let timingScore = 50; // neutral baseline
+  // A single privacy deposit with no withdrawal yet is excellent (funds still shielded).
+  // Multiple privacy txns: longer gap between them = harder to link.
+  let timingScore;
   const privacyTimestamps = [...strongTxns, ...moderateTxns]
     .map(t => t.timestamp)
     .filter(Boolean)
     .sort((a, b) => a - b);
-  if (privacyTimestamps.length >= 2) {
+  if (privacyTimestamps.length === 0) {
+    timingScore = 5; // never used a privacy protocol
+  } else if (privacyTimestamps.length === 1) {
+    // Single privacy interaction — funds are still in the shielded pool or this IS the exit.
+    // Either way, no linkable deposit→withdrawal pair visible on-chain: excellent.
+    timingScore = 80;
+  } else {
     const gaps = [];
     for (let i = 1; i < privacyTimestamps.length; i++) {
       gaps.push(privacyTimestamps[i] - privacyTimestamps[i - 1]);
     }
     const avgGapDays = (gaps.reduce((a, b) => a + b, 0) / gaps.length) / 86400;
-    if (avgGapDays > 7) timingScore = 85;        // >1 week between: excellent
-    else if (avgGapDays > 1) timingScore = 65;   // >1 day: good
-    else if (avgGapDays > 0.04) timingScore = 45; // >1 hour: moderate (same-day)
-    else timingScore = 20;                         // minutes apart: poor
-  } else if (privacyTimestamps.length === 0) {
-    timingScore = 5; // never used a privacy protocol
+    if (avgGapDays > 7) timingScore = 85;         // >1 week between: excellent
+    else if (avgGapDays > 1) timingScore = 65;    // >1 day: good
+    else if (avgGapDays > 0.04) timingScore = 45; // >1 hour: moderate
+    else timingScore = 20;                          // minutes apart: poor
   }
 
-  // 3. Amount obfuscation — do they withdraw different amounts than they deposit?
-  // We approximate: if they have many small transfers vs few large ones, score higher.
-  let amountScore = 40; // neutral
+  // 3. Amount obfuscation
+  // Fresh/sparse wallet: few transfers is actually good — less data to fingerprint.
+  let amountScore;
   const allTransferAmounts = txns
     .flatMap(tx => tx.nativeTransfers ?? [])
     .map(t => t.amount ?? 0)
     .filter(a => a > 0);
-  if (allTransferAmounts.length > 3) {
+  if (allTransferAmounts.length === 0) {
+    amountScore = 70; // no transfer history = nothing to link
+  } else if (allTransferAmounts.length <= 3) {
+    amountScore = 60; // very sparse — low surface area for amount-based linking
+  } else {
     const max = Math.max(...allTransferAmounts);
     const min = Math.min(...allTransferAmounts);
-    const variance = max / (min + 1); // ratio of largest to smallest
-    if (variance > 10) amountScore = 75;  // highly varied amounts: good obfuscation
+    const variance = max / (min + 1);
+    if (variance > 10) amountScore = 75;  // highly varied: good obfuscation
     else if (variance > 3) amountScore = 55;
-    else amountScore = 25; // very uniform amounts: easy to link
+    else amountScore = 25;                // uniform amounts: easy to link
   }
 
   // 4. Address reuse — more unique counterparties = less fingerprintable
+  // Fresh wallet with no txns: treat as clean (not penalised).
   const allCounterparties = new Set(txns.flatMap(tx => [
     ...(tx.nativeTransfers ?? []).map(t => t.toUserAccount),
     ...(tx.nativeTransfers ?? []).map(t => t.fromUserAccount),
   ]).filter(a => a && a !== walletAddress));
-  const uniqueRatio = txns.length > 0 ? allCounterparties.size / txns.length : 0;
   let addressReuseScore;
-  if (uniqueRatio > 0.8) addressReuseScore = 80;
-  else if (uniqueRatio > 0.5) addressReuseScore = 60;
-  else if (uniqueRatio > 0.3) addressReuseScore = 35;
-  else addressReuseScore = 15;
+  if (txns.length === 0) {
+    addressReuseScore = 75; // brand new — no reuse possible
+  } else {
+    const uniqueRatio = allCounterparties.size / txns.length;
+    if (uniqueRatio > 0.8) addressReuseScore = 80;
+    else if (uniqueRatio > 0.5) addressReuseScore = 60;
+    else if (uniqueRatio > 0.3) addressReuseScore = 35;
+    else addressReuseScore = 15;
+  }
 
-  // 5. Funding source diversity — funded from multiple sources is better
+  // 5. Funding source diversity
+  // Key fix: if the single funding source IS a known privacy protocol, that's excellent.
+  // If it's an unknown wallet, single-source is still somewhat risky.
+  const inboundTxns = txns.filter(tx => tx.nativeTransfers?.some(t => t.toUserAccount === walletAddress));
   const fundingSources = new Set(
-    txns
-      .filter(tx => tx.nativeTransfers?.some(t => t.toUserAccount === walletAddress))
+    inboundTxns
       .flatMap(tx => tx.nativeTransfers ?? [])
       .filter(t => t.toUserAccount === walletAddress)
       .map(t => t.fromUserAccount)
       .filter(Boolean)
   );
+  // Check if any funding source is itself a privacy protocol interaction
+  const fundedViaPrivacy = inboundTxns.some(tx =>
+    tx.accountData?.some(a => PRIVACY_STRONG.has(a.account) || PRIVACY_MODERATE.has(a.account))
+  );
   let fundingScore;
-  if (fundingSources.size >= 5) fundingScore = 80;
-  else if (fundingSources.size >= 3) fundingScore = 60;
-  else if (fundingSources.size >= 2) fundingScore = 45;
-  else if (fundingSources.size === 1) fundingScore = 25;
-  else fundingScore = 50; // no incoming — neutral
+  if (fundingSources.size === 0) {
+    fundingScore = 60; // no inbound yet — clean slate, moderately positive
+  } else if (fundedViaPrivacy) {
+    fundingScore = 85; // funded directly via a privacy protocol — best case
+  } else if (fundingSources.size >= 5) {
+    fundingScore = 80;
+  } else if (fundingSources.size >= 3) {
+    fundingScore = 60;
+  } else if (fundingSources.size >= 2) {
+    fundingScore = 45;
+  } else {
+    fundingScore = 28; // single traceable source
+  }
 
   // Weighted total privacy score
   const total = Math.round(
