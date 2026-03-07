@@ -1,6 +1,10 @@
 import 'dotenv/config';
 import express from 'express';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { scoreWallet } from './api/score.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const PORT = process.env.PORT || 3010;
@@ -54,6 +58,50 @@ app.post('/api/score', async (req, res) => {
     console.error('Scoring error:', err);
     res.status(500).json({ error: 'Scoring failed' });
   }
+});
+
+// ── PORTFOLIO ROUTES ──────────────────────────────────────────────────────────
+app.get('/portfolio', (req, res) => {
+  res.sendFile(join(__dirname, 'public', 'portfolio.html'));
+});
+
+app.post('/api/portfolio', async (req, res) => {
+  const { wallets } = req.body;
+  if (!wallets || !Array.isArray(wallets) || wallets.length === 0) {
+    return res.status(400).json({ error: 'wallets array is required' });
+  }
+
+  const results = await Promise.allSettled(wallets.map(w => scoreWallet(w)));
+
+  const walletScores = results.map((r, i) => {
+    if (r.status === 'fulfilled') return { wallet: wallets[i], ...r.value };
+    return { wallet: wallets[i], error: r.reason?.message || 'Scoring failed' };
+  });
+
+  const successful = walletScores.filter(w => !w.error);
+
+  let aggregate = 5;
+  if (successful.length > 0) {
+    let avg = successful.reduce((sum, w) => sum + w.score, 0) / successful.length;
+    if (successful.some(w => w.score > 70)) avg += 5;
+    aggregate = Math.min(Math.max(avg, 5), 98);
+  }
+
+  // Average privacy sub-scores across wallets that returned them
+  const withPrivacy = successful.filter(w => w.privacy);
+  let privacy = { total: '0.0', protocolUsage: '0.0', fundingSource: '50.0', opacity: '0.0' };
+  if (withPrivacy.length > 0) {
+    const avg = field =>
+      (withPrivacy.reduce((s, w) => s + parseFloat(w.privacy[field]), 0) / withPrivacy.length).toFixed(1);
+    privacy = {
+      total:         avg('total'),
+      protocolUsage: avg('protocolUsage'),
+      fundingSource: avg('fundingSource'),
+      opacity:       avg('opacity'),
+    };
+  }
+
+  res.json({ wallets: walletScores, aggregate: aggregate.toFixed(1), privacy });
 });
 
 app.listen(PORT, () => {

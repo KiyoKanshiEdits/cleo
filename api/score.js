@@ -263,6 +263,33 @@ function buildFindings({ pumpFun, whale, domain, copyTrade, behavioural, cex, nf
   return findings;
 }
 
+// ── PRIVACY SCORER ────────────────────────────────────────────────────────────
+
+const PRIVACY_PROGRAMS = new Set([
+  'ELUSVetDERksBHBKiHUNXzZsMgHGr6fMBNNdtBxwFY3e',
+  'noopb9bkMVfRPU8AsbpTUg8AQkHtKwMYZiFUjNRtMts',
+]);
+
+function scorePrivacy(txns) {
+  const privacyTxns = txns.filter(tx =>
+    tx.accountData?.some(a => PRIVACY_PROGRAMS.has(a.account))
+  );
+  const ratio = txns.length > 0 ? privacyTxns.length / txns.length : 0;
+
+  const protocolUsage = Math.min(ratio * 100, 95);
+  const fundingSource = 50; // neutral baseline
+  const opacity = protocolUsage; // same as protocolUsage per spec
+
+  const total = (protocolUsage + fundingSource + opacity) / 3;
+
+  return {
+    total:         total.toFixed(1),
+    protocolUsage: protocolUsage.toFixed(1),
+    fundingSource: fundingSource.toFixed(1),
+    opacity:       opacity.toFixed(1),
+  };
+}
+
 // ── STUB FALLBACK ─────────────────────────────────────────────────────────────
 
 function stub(walletAddress) {
@@ -272,6 +299,12 @@ function stub(walletAddress) {
     level: 'critical',
     verdict: 'CRITICAL EXPOSURE',
     tagline: `Mmm. How interesting. Three leaderboard appearances, two active copy-bots, and a KYC-linked exchange deposit. My lens never lies. (${short}) [STUB — add HELIUS_API_KEY to .env]`,
+    privacy: {
+      total:         '27.3',
+      protocolUsage: '16.0',
+      fundingSource: '50.0',
+      opacity:       '16.0',
+    },
     risks: [
       { name: 'Leaderboard Visibility', value: 95, tier: 'crit' },
       { name: 'Whale Flagging',         value: 88, tier: 'crit' },
@@ -326,6 +359,7 @@ export async function scoreWallet(walletAddress) {
     const copyTrade   = scoreCopyTrade(txns);
     const behavioural = scoreBehavioural(txns);
     const cex         = scoreExchangeLinkage(txns);
+    const privacy     = scorePrivacy(txns);
     const nftCount    = Array.isArray(nfts) ? nfts.length : 0;
 
     // Weighted composite (weights sum to 1.0), clamped 5–98
@@ -354,6 +388,7 @@ export async function scoreWallet(walletAddress) {
       level,
       verdict,
       tagline,
+      privacy,
       risks: [
         { name: 'Leaderboard Visibility', value: pumpFun.raw,      tier: tierOf(pumpFun.raw) },
         { name: 'Whale Flagging',         value: whale.raw,        tier: tierOf(whale.raw) },
