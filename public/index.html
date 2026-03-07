@@ -257,20 +257,6 @@ header { padding:28px 0 24px; border-bottom:2px solid var(--text); display:flex;
     </div>
     <div class="wallet-cards" id="wallet-cards"></div>
 
-    <!-- PRIVACY SCORE SECTION -->
-    <div class="privacy-section" id="privacy-section" style="display:none;">
-      <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:#008878;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
-        // Privacy Intelligence <span style="flex:1;height:1px;background:var(--border);display:block;"></span>
-      </div>
-      <div class="privacy-title-row">
-        <div class="privacy-title">Privacy Score</div>
-        <div class="privacy-score-badge" id="privacy-total-badge">--/100</div>
-      </div>
-      <p class="privacy-subtitle">How effectively have your wallets obscured their on-chain trail? This measures your actual use of privacy-enhancing tools, techniques, and behaviours — not just intent.</p>
-      <div id="privacy-bars"></div>
-      <div class="privacy-protocols" id="privacy-protocols-used"></div>
-    </div>
-
     <div class="cta">
       <div>
         <div class="cta-ey">// Cleo has examined the evidence</div>
@@ -375,6 +361,31 @@ function makeDial(score, idSuffix) {
   </div>`;
 }
 
+function renderPrivacyCard(p) {
+  const rows = [
+    { name: 'Protocol Usage',     value: parseFloat(p.protocolUsage   || 0) },
+    { name: 'Timing Entropy',     value: parseFloat(p.timingEntropy   || p.opacity || 0) },
+    { name: 'Amount Obfuscation', value: parseFloat(p.amountObfuscation || 0) },
+    { name: 'Address Diversity',  value: parseFloat(p.addressReuse    || 0) },
+    { name: 'Funding Diversity',  value: parseFloat(p.fundingDiversity || p.fundingSource || 0) },
+  ];
+  const protocols = (p.protocolsUsed && p.protocolsUsed.length > 0)
+    ? p.protocolsUsed.join('  ·  ')
+    : 'None detected';
+  return `
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div class="risk-section-title" style="color:#008878;">// Privacy Score &nbsp;<span style="background:#008878;color:white;font-family:'Space Mono',monospace;font-size:8px;padding:2px 8px;font-weight:400;">${parseFloat(p.total).toFixed(1)}/100</span></div>
+      <div style="display:grid;gap:2px;margin-bottom:8px;">
+        ${rows.map(r => `<div class="risk-row">
+          <div class="risk-name">${r.name}</div>
+          <div class="risk-bar-bg"><div class="privacy-bar-fill" style="width:${r.value}%"></div></div>
+          <div class="privacy-val">${r.value.toFixed(1)}</div>
+        </div>`).join('')}
+      </div>
+      <div class="privacy-protocols"><span style="color:var(--text-dim);letter-spacing:0.15em;font-size:8px;">// PROTOCOLS  </span>${protocols}</div>
+    </div>`;
+}
+
 function renderResults(results) {
   const container = document.getElementById('wallet-cards');
   container.innerHTML = results.map((d, i) => {
@@ -399,28 +410,15 @@ function renderResults(results) {
         </div>
         <div class="risk-section-title">// Specific Findings</div>
         <div class="findings">${renderFindings(d.findings)}</div>
+        ${d.privacy ? renderPrivacyCard(d.privacy) : ''}
       </div>
     </div>`;
   }).join('');
 
-  // Aggregate privacy across all wallets
-  const withPrivacy = results.filter(r => r.privacy);
-  if (withPrivacy.length > 0) {
-    const avg = field => (withPrivacy.reduce((s, r) => s + parseFloat(r.privacy[field] || 0), 0) / withPrivacy.length).toFixed(1);
-    const avgPrivacy = {
-      total:             avg('total'),
-      protocolUsage:     avg('protocolUsage'),
-      timingEntropy:     avg('timingEntropy') || avg('opacity'),
-      amountObfuscation: avg('amountObfuscation') || '40.0',
-      addressReuse:      avg('addressReuse') || '40.0',
-      fundingDiversity:  avg('fundingDiversity') || avg('fundingSource'),
-      protocolsUsed:     [...new Set(withPrivacy.flatMap(r => r.privacy.protocolsUsed || []))],
-    };
-    renderPrivacy(avgPrivacy);
-    document.getElementById('privacy-section').style.display = 'block';
-
-    // Update speech bubble
-    const totalPriv = parseFloat(avgPrivacy.total);
+  // Update speech bubble based on first result's privacy score
+  const firstPrivacy = results.find(r => r.privacy)?.privacy;
+  if (firstPrivacy) {
+    const totalPriv = parseFloat(firstPrivacy.total);
     const bubble = totalPriv < 30
       ? '"Low privacy footprint. Very traceable. My lens sees all."'
       : totalPriv < 60
@@ -436,26 +434,7 @@ function renderResults(results) {
   document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function renderPrivacy(p) {
-  document.getElementById('privacy-total-badge').textContent = `${p.total}/100`;
-  const rows = [
-    { name: 'Protocol Usage',     value: p.protocolUsage,     desc: 'ZK/MPC shields, privacy swaps, bridges' },
-    { name: 'Timing Entropy',     value: p.timingEntropy,     desc: 'Gap between deposit & withdrawal' },
-    { name: 'Amount Obfuscation', value: p.amountObfuscation, desc: 'Variation in transfer sizes' },
-    { name: 'Address Diversity',  value: p.addressReuse,      desc: 'Unique counterparties vs reuse' },
-    { name: 'Funding Diversity',  value: p.fundingDiversity,  desc: 'Number of distinct funding sources' },
-  ];
-  document.getElementById('privacy-bars').innerHTML = `<div style="display:grid;gap:2px;">` +
-    rows.map(r => `<div class="privacy-row">
-      <div class="privacy-row-name">${r.name}</div>
-      <div class="privacy-bar-bg"><div class="privacy-bar-fill" style="width:${r.value}%"></div></div>
-      <div class="privacy-val">${r.value}</div>
-    </div>`).join('') + `</div>`;
 
-  const protocols = p.protocolsUsed && p.protocolsUsed.length > 0 ? p.protocolsUsed.join('  ·  ') : 'None detected';
-  document.getElementById('privacy-protocols-used').innerHTML =
-    `<span style="color:var(--text-dim);letter-spacing:0.15em;font-size:8px;">// PROTOCOLS DETECTED  </span>${protocols}`;
-}
 
 function saveToPortfolio() {
   if (lastResults.length === 0) return;
