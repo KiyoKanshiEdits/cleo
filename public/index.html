@@ -583,7 +583,8 @@ const errorMsg    = document.getElementById('error-msg');
 walletInput.addEventListener('keydown', e => { if (e.key === 'Enter') examine(); });
 
 async function examine() {
-  const address = walletInput.value.trim();
+  const address = document.getElementById('wallet-input').value.trim();
+  console.log('Scanning address:', address);
   if (!address) { showError('Please enter a wallet address.'); return; }
 
   examineBtn.disabled = true;
