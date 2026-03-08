@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 const cache = new Map();
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
 // Version stamp — bump this to auto-invalidate all cached results on redeploy
-const CACHE_VERSION = '2025-03-v5';
+const CACHE_VERSION = '2025-03-v6';
 
 export function getCached(wallet) {
   const entry = cache.get(wallet);
@@ -23,16 +23,18 @@ const HELIUS_BASE = 'https://api.helius.xyz/v0';
 // ── KNOWN ADDRESSES ──────────────────────────────────────────────────────────
 const PUMP_FUN_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
 
-const CEX_ADDRESSES = new Set([
-  'H8sMJSCQxfKiFTCfDR3DUMLPwcRbM61LGFJ8N4dK3WjS',
-  'GJRs4FwHtemZ5ZE9x3FNvJ8TMwitKTh21yxdRPqn7ek5',
-  'CakcnaRDHka2gXyfbEd2d3xsvkJkqsLw2akB3zsN1D2S',
-  '5tzFkiKscXHK5jQtdbhB1VT3C4EwMhG7tHuepKsCNtWH',
-  'AC5RDfQFmDS1deWZos921JfqscXdByf8BKHs5ACWjtW2',
-  'FWznbcNXWQuHTawe9RxvQ2LdCENssh12dsznf4RiouN5',
-  'HVh6wHNBAsnt29hrNknefRJFbhiGZM5DBZ8g8nfCR6XS',
-  'AobVSwdW7bWaFwSAQCm5MR6njWcAq7gy5MLfxWBWVBBe',
+// CEX addresses with human-readable labels
+const CEX_LABELS = new Map([
+  ['H8sMJSCQxfKiFTCfDR3DUMLPwcRbM61LGFJ8N4dK3WjS', 'Coinbase'],
+  ['GJRs4FwHtemZ5ZE9x3FNvJ8TMwitKTh21yxdRPqn7ek5', 'Coinbase'],
+  ['CakcnaRDHka2gXyfbEd2d3xsvkJkqsLw2akB3zsN1D2S', 'Binance'],
+  ['5tzFkiKscXHK5jQtdbhB1VT3C4EwMhG7tHuepKsCNtWH', 'Binance'],
+  ['AC5RDfQFmDS1deWZos921JfqscXdByf8BKHs5ACWjtW2', 'Kraken'],
+  ['FWznbcNXWQuHTawe9RxvQ2LdCENssh12dsznf4RiouN5', 'OKX'],
+  ['HVh6wHNBAsnt29hrNknefRJFbhiGZM5DBZ8g8nfCR6XS', 'Bybit'],
+  ['AobVSwdW7bWaFwSAQCm5MR6njWcAq7gy5MLfxWBWVBBe', 'Crypto.com'],
 ]);
+const CEX_ADDRESSES = new Set(CEX_LABELS.keys());
 
 const DEX_PROGRAMS = new Set([
   '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8',
@@ -448,6 +450,155 @@ function scorePrivacy(txns, walletAddress) {
   };
 }
 
+// ── ADDRESS PROFILE ───────────────────────────────────────────────────────────
+// Addresses to exclude from counterparty lists — DEX routers, system programs, etc.
+const NOISE_ADDRESSES = new Set([
+  ...DEX_PROGRAMS,
+  ...PRIVACY_STRONG,
+  ...PRIVACY_MODERATE,
+  ...PRIVACY_CASH_ACCOUNTS,
+  ...VANISH_ACCOUNTS,
+  ...BRIDGE_STRONG,
+  ...BRIDGE_WEAK,
+  '11111111111111111111111111111111',          // System program
+  'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', // SPL Token
+  'ComputeBudget111111111111111111111111111111',   // Compute budget
+  'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJe8bv',  // ATA program
+  'SysvarRent111111111111111111111111111111111',
+  'SysvarC1ock11111111111111111111111111111111',
+]);
+
+function buildAddressProfile(txns, walletAddress, bals, domain) {
+  if (!txns || txns.length === 0) {
+    return {
+      walletAge: null,
+      txnCount: 0,
+      solBalance: '0.00',
+      tokenCount: 0,
+      fundingSources: [],
+      topSendTo: [],
+      topReceiveFrom: [],
+      cexActivity: [],
+      domain: domain ?? null,
+    };
+  }
+
+  const sol = ((bals?.nativeBalance ?? 0) / 1e9).toFixed(3);
+  const tokenCount = bals?.tokens?.length ?? 0;
+
+  // Wallet age — oldest tx in the 100 scanned
+  const timestamps = txns.map(t => t.timestamp).filter(Boolean).sort((a, b) => a - b);
+  const oldestTs = timestamps[0] ?? null;
+  const walletAge = oldestTs
+    ? Math.floor((Date.now() / 1000 - oldestTs) / 86400) // days
+    : null;
+
+  // ── Funding sources — first inbound native transfers to this wallet
+  // Take earliest txns and find who sent SOL to walletAddress
+  const inboundTransfers = txns
+    .flatMap(tx => (tx.nativeTransfers ?? []).map(t => ({ ...t, ts: tx.timestamp, sig: tx.signature })))
+    .filter(t => t.toUserAccount === walletAddress && t.fromUserAccount && t.fromUserAccount !== walletAddress)
+    .sort((a, b) => a.ts - b.ts);
+
+  // Deduplicate by sender, take earliest per sender
+  const seenFunders = new Map();
+  for (const t of inboundTransfers) {
+    if (!seenFunders.has(t.fromUserAccount)) {
+      seenFunders.set(t.fromUserAccount, { address: t.fromUserAccount, amount: t.amount, ts: t.ts, sig: t.sig });
+    }
+  }
+  const fundingSources = [...seenFunders.values()]
+    .slice(0, 3)
+    .map(f => ({
+      address: f.address,
+      amountSol: (f.amount / 1e9).toFixed(3),
+      label: CEX_LABELS.get(f.address) ?? null,
+      isPrivacy: PRIVACY_CASH_ACCOUNTS.has(f.address) || VANISH_ACCOUNTS.has(f.address)
+        || PRIVACY_STRONG.has(f.address) || PRIVACY_MODERATE.has(f.address),
+      sig: f.sig,
+    }));
+
+  // ── Counterparty frequency maps (outbound and inbound, excluding noise)
+  const sendCounts = new Map();
+  const recvCounts = new Map();
+
+  for (const tx of txns) {
+    for (const t of (tx.nativeTransfers ?? [])) {
+      if (t.amount <= 0) continue;
+      if (t.fromUserAccount === walletAddress && t.toUserAccount && t.toUserAccount !== walletAddress) {
+        if (!NOISE_ADDRESSES.has(t.toUserAccount)) {
+          sendCounts.set(t.toUserAccount, (sendCounts.get(t.toUserAccount) ?? 0) + 1);
+        }
+      }
+      if (t.toUserAccount === walletAddress && t.fromUserAccount && t.fromUserAccount !== walletAddress) {
+        if (!NOISE_ADDRESSES.has(t.fromUserAccount)) {
+          recvCounts.set(t.fromUserAccount, (recvCounts.get(t.fromUserAccount) ?? 0) + 1);
+        }
+      }
+    }
+    // Token transfers too
+    for (const t of (tx.tokenTransfers ?? [])) {
+      if (t.fromUserAccount === walletAddress && t.toUserAccount && t.toUserAccount !== walletAddress) {
+        if (!NOISE_ADDRESSES.has(t.toUserAccount)) {
+          sendCounts.set(t.toUserAccount, (sendCounts.get(t.toUserAccount) ?? 0) + 1);
+        }
+      }
+      if (t.toUserAccount === walletAddress && t.fromUserAccount && t.fromUserAccount !== walletAddress) {
+        if (!NOISE_ADDRESSES.has(t.fromUserAccount)) {
+          recvCounts.set(t.fromUserAccount, (recvCounts.get(t.fromUserAccount) ?? 0) + 1);
+        }
+      }
+    }
+  }
+
+  const rankAddresses = (map, limit = 5) =>
+    [...map.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+      .map(([address, count]) => ({
+        address,
+        count,
+        label: CEX_LABELS.get(address) ?? null,
+        isPrivacy: PRIVACY_CASH_ACCOUNTS.has(address) || VANISH_ACCOUNTS.has(address)
+          || PRIVACY_STRONG.has(address) || PRIVACY_MODERATE.has(address),
+      }));
+
+  const topSendTo = rankAddresses(sendCounts, 5);
+  const topReceiveFrom = rankAddresses(recvCounts, 5);
+
+  // ── CEX activity — which named exchanges were touched and how
+  const cexMap = new Map();
+  for (const tx of txns) {
+    const allAddresses = [
+      ...(tx.nativeTransfers ?? []).map(t => t.toUserAccount),
+      ...(tx.nativeTransfers ?? []).map(t => t.fromUserAccount),
+      ...(tx.tokenTransfers ?? []).map(t => t.toUserAccount),
+      ...(tx.tokenTransfers ?? []).map(t => t.fromUserAccount),
+    ];
+    for (const addr of allAddresses) {
+      if (CEX_LABELS.has(addr)) {
+        const label = CEX_LABELS.get(addr);
+        cexMap.set(label, (cexMap.get(label) ?? 0) + 1);
+      }
+    }
+  }
+  const cexActivity = [...cexMap.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, txCount]) => ({ name, txCount }));
+
+  return {
+    walletAge,
+    txnCount: txns.length,
+    solBalance: sol,
+    tokenCount,
+    fundingSources,
+    topSendTo,
+    topReceiveFrom,
+    cexActivity,
+    domain: domain ?? null,
+  };
+}
+
 // ── VERDICT + FINDINGS ────────────────────────────────────────────────────────
 function buildVerdict(score, { pumpFun, domain, cex, whale }) {
   const parts = [];
@@ -589,6 +740,7 @@ export async function scoreWallet(walletAddress) {
     const behavioural = scoreBehavioural(txns);
     const cex        = scoreExchangeLinkage(txns);
     const privacy    = scorePrivacy(txns, walletAddress);
+    const addressProfile = buildAddressProfile(txns, walletAddress, bals, domain);
     const nftCount   = Array.isArray(nfts) ? nfts.length : 0;
 
     const raw = Math.round(
@@ -605,7 +757,7 @@ export async function scoreWallet(walletAddress) {
     const tierOf = v => v >= 75 ? 'crit' : v >= 50 ? 'high' : v >= 30 ? 'med' : 'low';
 
     return {
-      score, level, verdict, tagline, privacy,
+      score, level, verdict, tagline, privacy, addressProfile,
       risks: [
         { name: 'Leaderboard Visibility', value: pumpFun.raw,     tier: tierOf(pumpFun.raw) },
         { name: 'Whale Flagging',         value: whale.raw,       tier: tierOf(whale.raw) },

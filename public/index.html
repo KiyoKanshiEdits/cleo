@@ -125,6 +125,24 @@ header { padding:28px 0 24px; border-bottom:2px solid var(--text); display:flex;
 .privacy-bar-fill { position:absolute; left:0; top:0; height:100%; background:teal; }
 .privacy-val { font-family:'Space Mono',monospace; font-size:10px; font-weight:700; color:#008878; text-align:right; }
 .privacy-protocols { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); padding:12px 16px; background:var(--cream); border:1px solid var(--border); margin-top:2px; line-height:1.8; }
+/* ADDRESS PROFILE */
+.address-profile { margin-top:20px; padding-top:20px; border-top:1px solid var(--border); }
+.ap-title-row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.ap-title { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.25em; text-transform:uppercase; color:var(--text-mid); }
+.ap-meta { display:flex; gap:16px; margin-bottom:14px; flex-wrap:wrap; }
+.ap-meta-item { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); }
+.ap-meta-item strong { color:var(--text); }
+.ap-section { margin-bottom:12px; }
+.ap-section-label { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; }
+.ap-row { display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:var(--cream); border:1px solid transparent; margin-bottom:2px; }
+.ap-row:hover { border-color:var(--border); }
+.ap-addr { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-mid); text-decoration:none; }
+.ap-addr:hover { color:var(--accent); }
+.ap-label { font-family:'Space Mono',monospace; font-size:8px; background:var(--gold-soft); color:var(--gold); padding:1px 6px; margin-left:6px; }
+.ap-label.privacy { background:var(--green-soft); color:var(--green); }
+.ap-label.cex { background:#ede8f8; color:#7a58e0; }
+.ap-count { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); }
+.ap-empty { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); padding:8px 10px; }
 /* CTA */
 .cta { background:var(--text); padding:36px 40px; display:grid; grid-template-columns:1fr auto; gap:32px; align-items:center; margin-top:40px; }
 .cta-ey { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.25em; text-transform:uppercase; color:#a090e0; margin-bottom:8px; }
@@ -467,6 +485,96 @@ function renderPrivacyCard(p, cardIdx) {
     </div>`;
 }
 
+function renderAddressProfile(ap) {
+  if (!ap) return '';
+
+  const fmt = addr => addr.slice(0, 6) + '...' + addr.slice(-6);
+  const solscanAddr = addr => `https://solscan.io/account/${addr}`;
+
+  const addrRow = ({ address, count, label, isPrivacy }) => {
+    const labelTag = label
+      ? `<span class="ap-label cex">${label}</span>`
+      : isPrivacy
+      ? `<span class="ap-label privacy">Privacy</span>`
+      : '';
+    const countTag = count !== undefined ? `<span class="ap-count">${count}×</span>` : '';
+    return `<div class="ap-row">
+      <div>
+        <a class="ap-addr" href="${solscanAddr(address)}" target="_blank" rel="noopener">${fmt(address)}</a>${labelTag}
+      </div>
+      ${countTag}
+    </div>`;
+  };
+
+  // Funding sources
+  let fundingHTML = '';
+  if (ap.fundingSources.length === 0) {
+    fundingHTML = '<div class="ap-empty">No inbound transfers found in last 100 txns.</div>';
+  } else {
+    fundingHTML = ap.fundingSources.map(f => {
+      const labelTag = f.label
+        ? `<span class="ap-label cex">${f.label}</span>`
+        : f.isPrivacy
+        ? `<span class="ap-label privacy">Privacy Protocol</span>`
+        : '';
+      return `<div class="ap-row">
+        <div>
+          <a class="ap-addr" href="${solscanAddr(f.address)}" target="_blank" rel="noopener">${fmt(f.address)}</a>${labelTag}
+        </div>
+        <span class="ap-count">${f.amountSol} SOL</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Top send-to
+  const sendHTML = ap.topSendTo.length === 0
+    ? '<div class="ap-empty">No outbound transfers detected.</div>'
+    : ap.topSendTo.map(a => addrRow(a)).join('');
+
+  // Top receive-from
+  const recvHTML = ap.topReceiveFrom.length === 0
+    ? '<div class="ap-empty">No inbound transfers detected.</div>'
+    : ap.topReceiveFrom.map(a => addrRow(a)).join('');
+
+  // CEX activity
+  const cexHTML = ap.cexActivity.length === 0
+    ? ''
+    : `<div class="ap-section">
+        <div class="ap-section-label">Exchange Activity</div>
+        ${ap.cexActivity.map(c => `<div class="ap-row"><span class="ap-addr">${c.name}</span><span class="ap-count">${c.txCount} txn${c.txCount > 1 ? 's' : ''}</span></div>`).join('')}
+      </div>`;
+
+  const ageTxt = ap.walletAge !== null
+    ? `<span class="ap-meta-item">Age (scanned window) <strong>${ap.walletAge}d+</strong></span>`
+    : '';
+
+  return `<div class="address-profile">
+    <div class="ap-title-row">
+      <span class="ap-title">// Address Profile</span>
+    </div>
+    <div class="ap-meta">
+      <span class="ap-meta-item">Balance <strong>${ap.solBalance} SOL</strong></span>
+      <span class="ap-meta-item">Tokens <strong>${ap.tokenCount}</strong></span>
+      <span class="ap-meta-item">Txns scanned <strong>${ap.txnCount}</strong></span>
+      ${ageTxt}
+      ${ap.domain ? `<span class="ap-meta-item">Domain <strong>${ap.domain}.sol</strong></span>` : ''}
+    </div>
+    <div class="ap-section">
+      <div class="ap-section-label">Funding Sources (earliest inbound)</div>
+      ${fundingHTML}
+    </div>
+    <div class="ap-section">
+      <div class="ap-section-label">Most Frequent Send-To</div>
+      ${sendHTML}
+    </div>
+    <div class="ap-section">
+      <div class="ap-section-label">Most Frequent Receive-From</div>
+      ${recvHTML}
+    </div>
+    ${cexHTML}
+  </div>`;
+}
+
 function renderResults(results) {
   const container = document.getElementById('wallet-cards');
   container.innerHTML = results.map((d, i) => {
@@ -492,6 +600,7 @@ function renderResults(results) {
         <div class="risk-section-title">// Specific Findings</div>
         <div class="findings">${renderFindings(d.findings)}</div>
         ${d.privacy ? renderPrivacyCard(d.privacy, i) : ''}
+        ${d.addressProfile ? renderAddressProfile(d.addressProfile) : ''}
       </div>
     </div>`;
   }).join('');
