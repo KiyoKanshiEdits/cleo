@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 const cache = new Map();
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
 // Version stamp — bump this to auto-invalidate all cached results on redeploy
-const CACHE_VERSION = '2025-03-v8';
+const CACHE_VERSION = '2025-03-v9';
 
 export function getCached(wallet) {
   const entry = cache.get(wallet);
@@ -214,12 +214,31 @@ function scorePrivacy(txns, walletAddress) {
   );
   const pcSigs = new Set(privacyCashTxns.map(t => t.signature));
 
-  // Vanish: main program ID + known type + real transfer
-  const vanishTxns = txns.filter(tx =>
-    tx.accountData?.some(a => PRIVACY_MODERATE.has(a.account)) &&
-    hasRealTransfer(tx) &&
-    isKnownType(tx)
-  );
+  // Vanish pool accounts — deposits TO or withdrawals FROM these = confirmed Vanish interaction
+  const VANISH_POOLS = new Set([
+    '7ozoNcVqgptbAUHjLR1vNHgEfKiE5aYufStEHzJhxKeG',
+    'DM1kVwqbNJYeDgKn2T3UbCHqquSh3PAYHJpRYfTCcbrK',
+    '2bxLnNUgnbf7d4CX4sfdY2YoJkKirNc5FHE6awRwKKYY',
+    '3PMpWWXCVUrkhHpFWPH1prxBYxQ4SV4rucJchYRSBojH',
+    '8MjKXQgj97NPVNhj9gJrQNP7BibGCGkFMVJ2qZsC58E',
+    'Evamno6in8wQGBKUnVbu3FQV5eNwn2ttE5456yDbnodR',
+    '49zHSpdFZaSc92ygkooaMGVeeriLSXX5ujriDWVxTwVS',
+    '37p56C7BLiMyG2jEa7zTNSewj94C34SuFEnxnRZ87kWw',
+    '2QbCx4cTy11nv5FieXJkAKPvSVGdFcZPFdDMTo9vEfqm',
+    '7juKfkXpvYHqjhxwK1Se2Mod96hHETHNduC9BMxBdxyt',
+  ]);
+
+  // Vanish: program ID OR direct deposit/withdrawal to known Vanish pool vault
+  // Must have a real transfer to rule out failed txns and co-invocations
+  const vanishTxns = txns.filter(tx => {
+    if (!hasRealTransfer(tx)) return false;
+    if (tx.accountData?.some(a => PRIVACY_MODERATE.has(a.account))) return true;
+    const toVanish = tx.nativeTransfers?.some(t => VANISH_POOLS.has(t.toUserAccount));
+    const fromVanish = tx.nativeTransfers?.some(t => VANISH_POOLS.has(t.fromUserAccount));
+    const tokenToVanish = tx.tokenTransfers?.some(t => VANISH_POOLS.has(t.toUserAccount));
+    const tokenFromVanish = tx.tokenTransfers?.some(t => VANISH_POOLS.has(t.fromUserAccount));
+    return toVanish || fromVanish || tokenToVanish || tokenFromVanish;
+  });
   const vanishSigs = new Set(vanishTxns.map(t => t.signature));
 
   // Elusiv (legacy ZK, sunset 2024): same strict rules
@@ -442,11 +461,25 @@ function scorePrivacy(txns, walletAddress) {
 
 // ── ADDRESS PROFILE ───────────────────────────────────────────────────────────
 // Addresses to exclude from counterparty lists — DEX routers, system programs, etc.
+// VANISH_POOL_NOISE — keep Vanish vaults out of counterparty lists
+const VANISH_POOL_NOISE = new Set([
+  '7ozoNcVqgptbAUHjLR1vNHgEfKiE5aYufStEHzJhxKeG',
+  'DM1kVwqbNJYeDgKn2T3UbCHqquSh3PAYHJpRYfTCcbrK',
+  '2bxLnNUgnbf7d4CX4sfdY2YoJkKirNc5FHE6awRwKKYY',
+  '3PMpWWXCVUrkhHpFWPH1prxBYxQ4SV4rucJchYRSBojH',
+  '8MjKXQgj97NPVNhj9gJrQNP7BibGCGkFMVJ2qZsC58E',
+  'Evamno6in8wQGBKUnVbu3FQV5eNwn2ttE5456yDbnodR',
+  '49zHSpdFZaSc92ygkooaMGVeeriLSXX5ujriDWVxTwVS',
+  '37p56C7BLiMyG2jEa7zTNSewj94C34SuFEnxnRZ87kWw',
+  '2QbCx4cTy11nv5FieXJkAKPvSVGdFcZPFdDMTo9vEfqm',
+  '7juKfkXpvYHqjhxwK1Se2Mod96hHETHNduC9BMxBdxyt',
+]);
+
 const NOISE_ADDRESSES = new Set([
   ...DEX_PROGRAMS,
   ...PRIVACY_STRONG,
   ...PRIVACY_MODERATE,
-
+  ...VANISH_POOL_NOISE,
   ...BRIDGE_STRONG,
   ...BRIDGE_WEAK,
   '11111111111111111111111111111111',          // System program
