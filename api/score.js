@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 const cache = new Map();
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
 // Version stamp — bump this to auto-invalidate all cached results on redeploy
-const CACHE_VERSION = '2025-03-v7';
+const CACHE_VERSION = '2025-03-v8';
 
 export function getCached(wallet) {
   const entry = cache.get(wallet);
@@ -53,7 +53,7 @@ const DEX_PROGRAMS = new Set([
 const PRIVACY_STRONG = new Set([
   'ELUSVetDERksBHBKiHUNXzZsMgHGr6fMBNNdtBxwFY3e', // Elusiv (sunset Feb 2024, legacy ZK — historical detection)
   '9fhQBbumKEFuXtMBDw8AaQyAjCorLGJQiS3skWZdQyQD', // PrivacyCash main program (ZK/Merkle, $270M+ volume, confirmed via tx programId)
-  'L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95',  // PrivacyCash verifier program (ZK proof verifier)
+  // L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95 REMOVED: co-invoked by Vanish txns, causes false PrivacyCash detections
   // Umbra (Arcium-powered, Solana-native) — closed beta, no public program ID yet
   // Encifher — live on mainnet, docs intentionally omit program addresses (ephemeral account architecture)
 ]);
@@ -192,25 +192,49 @@ function scoreExchangeLinkage(txns) {
 function scorePrivacy(txns, walletAddress) {
   const now = Date.now() / 1000;
 
-  // 1. Protocol usage — what protocols did they use and how strong
-  const strongTxns = txns.filter(tx =>
-    tx.accountData?.some(a => PRIVACY_STRONG.has(a.account))
-  );
+  // ── ACCURACY-FIRST PROTOCOL DETECTION ──────────────────────────────────────────────
+  // Rules: a tx only counts if ALL of the following are true:
+  //   1. The protocol's MAIN program ID appears in accountData
+  //   2. The tx type is not UNKNOWN (UNKNOWN = failed tx or unrecognised inner instruction noise)
+  //   3. An actual native or token transfer occurred (proves value actually moved)
+  // This eliminates: failed txns, co-invoked verifier programs, and aggregator routes
+  // that touch a privacy program without depositing the user's own funds.
 
-  // PrivacyCash: program ID only — wallet must have directly invoked the program
+  const hasRealTransfer = tx =>
+    (tx.nativeTransfers?.length > 0) || (tx.tokenTransfers?.length > 0);
+  const isKnownType = tx => tx.type !== 'UNKNOWN';
+
+  // PrivacyCash: MAIN program ID only (9fhQBbum...) — NOT the verifier (L2TExMFK...)
+  // The verifier is a co-program that appears in Vanish txns too — not a reliable signal alone.
+  const PC_MAIN = '9fhQBbumKEFuXtMBDw8AaQyAjCorLGJQiS3skWZdQyQD';
   const privacyCashTxns = txns.filter(tx =>
-    tx.accountData?.some(a =>
-      a.account === '9fhQBbumKEFuXtMBDw8AaQyAjCorLGJQiS3skWZdQyQD' ||
-      a.account === 'L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95'
-    )
+    tx.accountData?.some(a => a.account === PC_MAIN) &&
+    hasRealTransfer(tx) &&
+    isKnownType(tx)
   );
   const pcSigs = new Set(privacyCashTxns.map(t => t.signature));
 
-  // Vanish: program ID only — wallet must have directly invoked vanshF62...
-  const vanishTxns = txns.filter(tx => tx.accountData?.some(a => PRIVACY_MODERATE.has(a.account)));
+  // Vanish: main program ID + known type + real transfer
+  const vanishTxns = txns.filter(tx =>
+    tx.accountData?.some(a => PRIVACY_MODERATE.has(a.account)) &&
+    hasRealTransfer(tx) &&
+    isKnownType(tx)
+  );
   const vanishSigs = new Set(vanishTxns.map(t => t.signature));
 
-  // Combine all moderate-tier (Vanish + PrivacyCash both count here for scoring weight)
+  // Elusiv (legacy ZK, sunset 2024): same strict rules
+  const ELUSIV = 'ELUSVetDERksBHBKiHUNXzZsMgHGr6fMBNNdtBxwFY3e';
+  const elusivTxns = txns.filter(tx =>
+    tx.accountData?.some(a => a.account === ELUSIV) &&
+    hasRealTransfer(tx) &&
+    isKnownType(tx)
+  );
+
+  // strongTxns = PrivacyCash + Elusiv (ZK shielded pools)
+  const strongSigs = new Set([...pcSigs, ...elusivTxns.map(t => t.signature)]);
+  const strongTxns = txns.filter(tx => strongSigs.has(tx.signature));
+
+  // moderateTxns = Vanish
   const moderateSigs = new Set([...vanishSigs, ...pcSigs]);
   const moderateTxns = txns.filter(tx => moderateSigs.has(tx.signature));
 
