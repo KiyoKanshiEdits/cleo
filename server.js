@@ -34,6 +34,38 @@ app.post('/api/score', async (req, res) => {
   }
 });
 
+// ── DEBUG: RAW PRIVACY PROGRAM HITS ──────────────────────────────────────────
+app.get('/api/debug/privacy/:address', async (req, res) => {
+  const address = req.params.address;
+  const HELIUS_KEY = process.env.HELIUS_API_KEY;
+  const PC_PROGRAM  = '9fhQBbumKEFuXtMBDw8AaQyAjCorLGJQiS3skWZdQyQD';
+  const PC_VERIFIER = 'L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95';
+  const VANISH      = 'vanshF62ku4jVVdf8DS47SXuJC1rq8qokGSANAomhey';
+  const PRIVACY_IDS = new Set([PC_PROGRAM, PC_VERIFIER, VANISH]);
+  try {
+    const url = `https://api.helius.xyz/v0/addresses/${address}/transactions?api-key=${HELIUS_KEY}&limit=100`;
+    const r = await fetch(url);
+    const txns = await r.json();
+    const hits = txns
+      .filter(tx => tx.accountData?.some(a => PRIVACY_IDS.has(a.account)))
+      .map(tx => ({
+        signature: tx.signature,
+        timestamp: new Date(tx.timestamp * 1000).toISOString(),
+        type: tx.type,
+        source: tx.source,
+        matchedPrograms: tx.accountData
+          .filter(a => PRIVACY_IDS.has(a.account))
+          .map(a => ({ account: a.account, label: a.account === VANISH ? 'Vanish' : 'PrivacyCash', nativeBalanceChange: a.nativeBalanceChange })),
+        nativeTransfers: tx.nativeTransfers || [],
+        tokenTransfers: tx.tokenTransfers || [],
+        explorerLink: `https://solscan.io/tx/${tx.signature}`,
+      }));
+    res.json({ wallet: address, totalTxnsScanned: txns.length, privacyHits: hits.length, hits });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── PORTFOLIO MULTI-SCAN ──────────────────────────────────────────────────────
 app.post('/api/portfolio', async (req, res) => {
   const { wallets } = req.body;
