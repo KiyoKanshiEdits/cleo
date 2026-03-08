@@ -69,20 +69,42 @@ header { padding:28px 0 24px; border-bottom:2px solid var(--text); display:flex;
 .save-portfolio-btn { background:var(--text); color:var(--bg); border:none; padding:10px 20px; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.15em; text-transform:uppercase; cursor:pointer; transition:opacity 0.15s; white-space:nowrap; }
 .save-portfolio-btn:hover { opacity:0.8; }
 .save-portfolio-btn.saved { background:var(--green); }
-/* WALLET CARDS */
+/* WALLET CARDS — TABBED PANEL SYSTEM */
 .wallet-cards { display:grid; gap:32px; }
-.wallet-card { border:1px solid var(--border); background:var(--cream); }
-.wallet-card-header { padding:20px 24px 16px; border-bottom:1px solid var(--border); display:grid; grid-template-columns:1fr auto; gap:16px; align-items:start; }
+.wallet-card { border:1px solid var(--border); background:var(--cream); position:relative; overflow:hidden; }
+/* Scanline overlay */
+.wallet-card::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.015) 2px,rgba(0,0,0,0.015) 4px); pointer-events:none; z-index:1; }
+/* Corner brackets */
+.card-corner { position:absolute; width:14px; height:14px; z-index:2; pointer-events:none; }
+.card-corner.tl { top:6px; left:6px; border-top:1.5px solid var(--accent); border-left:1.5px solid var(--accent); opacity:0.5; }
+.card-corner.tr { top:6px; right:6px; border-top:1.5px solid var(--accent); border-right:1.5px solid var(--accent); opacity:0.5; }
+.card-corner.bl { bottom:6px; left:6px; border-bottom:1.5px solid var(--accent); border-left:1.5px solid var(--accent); opacity:0.5; }
+.card-corner.br { bottom:6px; right:6px; border-bottom:1.5px solid var(--accent); border-right:1.5px solid var(--accent); opacity:0.5; }
+.wallet-card-header { padding:20px 24px 16px; border-bottom:1px solid var(--border); display:grid; grid-template-columns:1fr auto; gap:16px; align-items:start; position:relative; z-index:2; }
 .wallet-card-address { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); margin-bottom:6px; }
 .wallet-card-verdict { font-size:20px; font-weight:800; letter-spacing:-0.02em; color:var(--accent); line-height:1.1; margin-bottom:6px; }
 .wallet-card-tagline { font-family:'Space Mono',monospace; font-size:10px; color:var(--text-mid); line-height:1.6; max-width:420px; }
-.wallet-card-body { padding:20px 24px; }
 .wallet-card-dial { display:flex; flex-direction:column; align-items:center; gap:4px; }
 .dial-ring { position:relative; width:90px; height:90px; }
 .dial-ring svg { width:90px; height:90px; transform:rotate(-90deg); }
 .dial-num { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:24px; font-weight:800; color:var(--accent); line-height:1; }
 .dial-num span { font-family:'Space Mono',monospace; font-size:9px; font-weight:400; color:var(--text-dim); margin-top:2px; }
 .dial-label { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); }
+/* TAB NAV */
+.card-tabs { display:flex; align-items:stretch; border-bottom:1px solid var(--border); position:relative; z-index:2; background:var(--surface); }
+.card-tab { flex:1; padding:10px 0; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); text-align:center; cursor:pointer; border:none; background:none; transition:color 0.2s; position:relative; user-select:none; }
+.card-tab:hover { color:var(--text-mid); }
+.card-tab.active { color:var(--accent); }
+.card-tab-indicator { position:absolute; bottom:0; left:0; height:2px; background:var(--accent); transition:transform 0.3s cubic-bezier(0.4,0,0.2,1), width 0.3s cubic-bezier(0.4,0,0.2,1); z-index:3; }
+.card-nav-arrow { position:absolute; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:14px; padding:8px; z-index:4; transition:color 0.15s; }
+.card-nav-arrow:hover { color:var(--accent); }
+.card-nav-arrow.left { left:4px; }
+.card-nav-arrow.right { right:4px; }
+/* PANEL SLIDER */
+.card-panels-wrap { overflow:hidden; position:relative; z-index:2; }
+.card-panels { display:flex; transition:transform 0.35s cubic-bezier(0.4,0,0.2,1); will-change:transform; }
+.card-panel { flex:0 0 100%; min-width:0; padding:20px 24px; }
+/* EXPOSURE PANEL */
 .risk-section-title { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.3em; text-transform:uppercase; color:var(--text-dim); margin-bottom:12px; display:flex; align-items:center; gap:12px; }
 .risk-section-title::after { content:''; flex:1; height:1px; background:var(--border); }
 .risk-rows { display:grid; gap:2px; margin-bottom:20px; }
@@ -90,7 +112,7 @@ header { padding:28px 0 24px; border-bottom:2px solid var(--text); display:flex;
 .risk-row:hover { border-color:var(--border); }
 .risk-name { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-mid); }
 .risk-bar-bg { height:4px; background:var(--border); position:relative; overflow:hidden; }
-.risk-bar-fill { position:absolute; left:0; top:0; height:100%; }
+.risk-bar-fill { position:absolute; left:0; top:0; height:100%; transition:width 0.8s cubic-bezier(0.4,0,0.2,1); }
 .risk-bar-fill.crit { background:var(--accent); }
 .risk-bar-fill.high { background:#7a58e0; }
 .risk-bar-fill.med  { background:var(--gold); }
@@ -111,55 +133,74 @@ header { padding:28px 0 24px; border-bottom:2px solid var(--text); display:flex;
 .finding-badge.ok    { background:var(--green-soft);  color:var(--green); }
 .finding-title  { font-size:12px; font-weight:600; color:var(--text); margin-bottom:4px; }
 .finding-detail { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); line-height:1.6; }
-/* PRIVACY SECTION */
-.privacy-section { margin-top:48px; padding-top:32px; border-top:2px solid var(--border); }
-.privacy-title-row { display:flex; align-items:center; gap:16px; margin-bottom:8px; }
-.privacy-title { font-size:18px; font-weight:800; color:var(--text); }
-.privacy-score-badge { font-family:'Space Mono',monospace; font-size:10px; background:var(--accent); color:white; padding:3px 10px; }
-.privacy-subtitle { font-family:'Space Mono',monospace; font-size:10px; color:var(--text-mid); line-height:1.7; margin-bottom:24px; max-width:600px; }
-.privacy-grid { display:grid; grid-template-columns:1fr 1fr; gap:2px; margin-bottom:16px; }
-.privacy-row { display:grid; grid-template-columns:200px 1fr 40px; align-items:center; gap:12px; padding:10px 14px; background:var(--cream); border:1px solid transparent; }
-.privacy-row:hover { border-color:var(--border); }
-.privacy-row-name { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-mid); }
-.privacy-bar-bg { height:4px; background:var(--border); position:relative; overflow:hidden; }
-.privacy-bar-fill { position:absolute; left:0; top:0; height:100%; background:teal; }
+/* PRIVACY PANEL */
+.privacy-bar-fill { position:absolute; left:0; top:0; height:100%; background:teal; transition:width 0.8s cubic-bezier(0.4,0,0.2,1); }
 .privacy-val { font-family:'Space Mono',monospace; font-size:10px; font-weight:700; color:#008878; text-align:right; }
-.privacy-protocols { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); padding:12px 16px; background:var(--cream); border:1px solid var(--border); margin-top:2px; line-height:1.8; }
-/* ADDRESS PROFILE */
-.address-profile { margin-top:20px; padding-top:20px; border-top:1px solid var(--border); }
-.ap-title-row { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
-.ap-title { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.25em; text-transform:uppercase; color:var(--text-mid); }
-.ap-meta { display:flex; gap:16px; margin-bottom:14px; flex-wrap:wrap; }
-.ap-meta-item { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); }
-.ap-meta-item strong { color:var(--text); }
-.ap-section { margin-bottom:12px; }
-.ap-section-label { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; }
-.ap-row { display:flex; align-items:center; justify-content:space-between; padding:6px 10px; background:var(--cream); border:1px solid transparent; margin-bottom:2px; }
+.privacy-protocols { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); padding:12px 16px; background:white; border:1px solid var(--border); margin-top:8px; line-height:1.8; }
+/* PROFILE PANEL */
+.profile-layout { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.ap-section { margin-bottom:14px; }
+.ap-section-label { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid var(--border); }
+.ap-meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:16px; }
+.ap-meta-cell { background:white; border:1px solid var(--border); padding:8px 10px; }
+.ap-meta-label { font-family:'Space Mono',monospace; font-size:7px; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:3px; }
+.ap-meta-value { font-family:'Space Mono',monospace; font-size:12px; font-weight:700; color:var(--text); }
+.ap-row { display:flex; align-items:center; justify-content:space-between; padding:5px 8px; background:white; border:1px solid transparent; margin-bottom:2px; transition:border-color 0.1s; }
 .ap-row:hover { border-color:var(--border); }
-.ap-addr { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-mid); text-decoration:none; }
+.ap-addr { font-family:'Space Mono',monospace; font-size:8.5px; color:var(--text-mid); text-decoration:none; }
 .ap-addr:hover { color:var(--accent); }
-.ap-label { font-family:'Space Mono',monospace; font-size:8px; background:var(--gold-soft); color:var(--gold); padding:1px 6px; margin-left:6px; }
-.ap-label.privacy { background:var(--green-soft); color:var(--green); }
-.ap-label.cex { background:#ede8f8; color:#7a58e0; }
-.ap-count { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); }
-.ap-empty { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); padding:8px 10px; }
+.ap-tag { font-family:'Space Mono',monospace; font-size:7px; padding:1px 5px; margin-left:5px; }
+.ap-tag.cex     { background:#ede8f8; color:#7a58e0; }
+.ap-tag.privacy { background:var(--green-soft); color:var(--green); }
+.ap-count { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); white-space:nowrap; }
+.ap-empty { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); padding:6px 8px; }
+/* BUBBLE MAP */
+.bubble-map-wrap { position:relative; }
+.bubble-map-title { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; padding-bottom:4px; border-bottom:1px solid var(--border); }
+.bubble-map-svg { width:100%; background:white; border:1px solid var(--border); }
+.bubble-tooltip { position:absolute; background:var(--text); color:var(--bg); font-family:'Space Mono',monospace; font-size:8px; padding:5px 8px; pointer-events:none; opacity:0; transition:opacity 0.15s; z-index:10; max-width:200px; word-break:break-all; white-space:nowrap; }
+/* Animations */
+@keyframes bubble-pulse { 0%,100% { r:var(--r0); opacity:0.85; } 50% { r:var(--r1); opacity:1; } }
+@keyframes line-dash { from { stroke-dashoffset:20; } to { stroke-dashoffset:0; } }
+@keyframes score-count { from { opacity:0; transform:scale(0.7); } to { opacity:1; transform:scale(1); } }
+.dial-num { animation:score-count 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
 /* CTA */
 .cta { background:var(--text); padding:36px 40px; display:grid; grid-template-columns:1fr auto; gap:32px; align-items:center; margin-top:40px; }
 .cta-ey { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.25em; text-transform:uppercase; color:#a090e0; margin-bottom:8px; }
 .cta-hl { font-size:20px; font-weight:800; color:white; margin-bottom:6px; }
 .cta-bd { font-family:'Space Mono',monospace; font-size:10px; color:rgba(255,255,255,0.5); line-height:1.7; }
 .cta-button { background:var(--accent); border:none; padding:14px 28px; font-family:'Syne',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:white; cursor:pointer; white-space:nowrap; text-decoration:none; display:inline-block; transition:opacity 0.15s; }
-.concept-note { margin-top:40px; padding:24px; background:var(--cream); border:1px solid var(--border); display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
-.note-item-title { font-family:'Space Mono',monospace; font-size:9px; letter-spacing:0.25em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; }
-.note-item-body { font-family:'Space Mono',monospace; font-size:10px; color:var(--text-mid); line-height:1.6; }
+/* RAILGUN-inspired: animated line-mesh hero background */
+.hero-mesh { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:0; opacity:0.18; }
+.hero-mesh svg { width:100%; height:100%; }
+@keyframes mesh-drift { 0%,100% { transform:translateY(0) scaleX(1); } 50% { transform:translateY(-8px) scaleX(1.02); } }
+.mesh-path { animation:mesh-drift 8s ease-in-out infinite; }
+.mesh-path:nth-child(2) { animation-delay:-2s; }
+.mesh-path:nth-child(3) { animation-delay:-4s; }
+.mesh-path:nth-child(4) { animation-delay:-6s; }
+/* Stats trust bar */
+.stats-bar { display:flex; gap:0; border:1px solid var(--border); background:var(--cream); margin-top:20px; }
+.stats-item { flex:1; padding:10px 14px; border-right:1px solid var(--border); text-align:center; }
+.stats-item:last-child { border-right:none; }
+.stats-num { font-size:15px; font-weight:800; color:var(--accent); letter-spacing:-0.02em; line-height:1; }
+.stats-lbl { font-family:'Space Mono',monospace; font-size:7.5px; letter-spacing:0.15em; text-transform:uppercase; color:var(--text-dim); margin-top:3px; }
+/* RAILGUN-inspired numbered FAQ */
+.faq-grid { margin-top:40px; display:grid; grid-template-columns:repeat(3,1fr); gap:0; border:1px solid var(--border); }
+.faq-item { padding:24px; border-right:1px solid var(--border); border-left:3px solid var(--accent); position:relative; }
+.faq-item:last-child { border-right:none; }
+.faq-num { font-family:'Space Mono',monospace; font-size:28px; font-weight:800; color:var(--accent); opacity:0.12; position:absolute; top:16px; right:18px; line-height:1; }
+.faq-title { font-size:13px; font-weight:700; color:var(--text); margin-bottom:8px; line-height:1.3; }
+.faq-body { font-family:'Space Mono',monospace; font-size:9.5px; color:var(--text-mid); line-height:1.7; }
+@media (max-width:640px) { .faq-grid { grid-template-columns:1fr; } .stats-bar { flex-wrap:wrap; } .stats-item { flex:1 1 50%; } }
 @media (max-width:640px) {
   .hero { grid-template-columns:1fr; }
   .mascot-area { display:none; }
   .wallet-card-header { grid-template-columns:1fr; }
   .findings { grid-template-columns:1fr; }
-  .privacy-grid { grid-template-columns:1fr; }
+  .profile-layout { grid-template-columns:1fr; }
   .cta { grid-template-columns:1fr; }
   .concept-note { grid-template-columns:1fr; }
+  .ap-meta-grid { grid-template-columns:1fr 1fr; }
 }
 </style>
 </head>
@@ -206,10 +247,23 @@ header { padding:28px 0 24px; border-bottom:2px solid var(--text); display:flex;
   </header>
 
   <!-- HERO -->
-  <div class="hero">
-    <div class="hero-text">
+  <div class="hero" style="position:relative;">
+    <!-- Animated line-mesh background (RAILGUN-inspired) -->
+    <div class="hero-mesh">
+      <svg viewBox="0 0 860 300" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <path class="mesh-path" d="M-40 260 Q180 180 400 220 Q620 260 900 160" fill="none" stroke="var(--accent)" stroke-width="1"/>
+        <path class="mesh-path" d="M-40 230 Q200 150 420 190 Q640 230 900 130" fill="none" stroke="var(--accent)" stroke-width="0.8"/>
+        <path class="mesh-path" d="M-40 200 Q220 120 440 165 Q660 200 900 100" fill="none" stroke="var(--accent)" stroke-width="0.6"/>
+        <path class="mesh-path" d="M-40 170 Q240 90 460 140 Q680 175 900 75" fill="none" stroke="var(--accent)" stroke-width="0.4"/>
+        <path class="mesh-path" d="M-40 290 Q160 220 380 250 Q600 280 900 190" fill="none" stroke="var(--accent)" stroke-width="0.5"/>
+        <line x1="200" y1="0" x2="180" y2="300" stroke="var(--accent)" stroke-width="0.3" opacity="0.5"/>
+        <line x1="400" y1="0" x2="380" y2="300" stroke="var(--accent)" stroke-width="0.3" opacity="0.5"/>
+        <line x1="600" y1="0" x2="580" y2="300" stroke="var(--accent)" stroke-width="0.3" opacity="0.5"/>
+      </svg>
+    </div>
+    <div class="hero-text" style="position:relative;z-index:1;">
       <div class="hero-eyebrow">Wallet Intelligence</div>
-      <h1>How exposed is<br>your <em>portfolio?</em></h1>
+      <h1>How <em>exposed</em> is<br>your portfolio?</h1>
       <p class="hero-sub">Every trade, every interaction, every movement leaves a trace. Leaderboards, whale trackers, copy-bots, and on-chain sleuths have access to your financial activity. Find out your level of exposure.</p>
       <div>
         <label class="search-label">// Paste up to 5 Solana wallet addresses — one per line</label>
@@ -221,6 +275,13 @@ header { padding:28px 0 24px; border-bottom:2px solid var(--text); display:flex;
           </div>
         </div>
         <div class="error-msg" id="error-msg"></div>
+      </div>
+      <!-- RAILGUN-inspired trust stats bar -->
+      <div class="stats-bar">
+        <div class="stats-item"><div class="stats-num">100</div><div class="stats-lbl">Txns Scanned</div></div>
+        <div class="stats-item"><div class="stats-num">6</div><div class="stats-lbl">Risk Dimensions</div></div>
+        <div class="stats-item"><div class="stats-num">5</div><div class="stats-lbl">Privacy Metrics</div></div>
+        <div class="stats-item"><div class="stats-num">0</div><div class="stats-lbl">Signatures Required</div></div>
       </div>
     </div>
     <!-- CLEO MASCOT -->
@@ -285,19 +346,22 @@ header { padding:28px 0 24px; border-bottom:2px solid var(--text); display:flex;
     </div>
   </div>
 
-  <!-- FAQ -->
-  <div class="concept-note">
-    <div>
-      <div class="note-item-title">Why does exposure matter?</div>
-      <div class="note-item-body">Having your on-chain financial behaviour public means you have no control over who sees your activity. This creates an unsecure trading environment leaving you vulnerable to threat actors and on-chain sleuths.</div>
+  <!-- RAILGUN-inspired numbered FAQ -->
+  <div class="faq-grid">
+    <div class="faq-item">
+      <div class="faq-num">01</div>
+      <div class="faq-title">Why does exposure matter?</div>
+      <div class="faq-body">Having your on-chain financial behaviour public means you have no control over who sees your activity. This creates an unsecure trading environment, leaving you vulnerable to threat actors and on-chain sleuths.</div>
     </div>
-    <div>
-      <div class="note-item-title">How can I protect myself?</div>
-      <div class="note-item-body">Private and shielded trading is one way you can protect yourself from the ill-intentioned and ensure your success does not become your weakness.</div>
+    <div class="faq-item">
+      <div class="faq-num">02</div>
+      <div class="faq-title">How can I protect myself?</div>
+      <div class="faq-body">Private and shielded trading is one way you can protect yourself from the ill-intentioned and ensure your success does not become your weakness.</div>
     </div>
-    <div>
-      <div class="note-item-title">How can I stay up to date on my exposure?</div>
-      <div class="note-item-body">Cleo gives real-time information about the level of exposure for any of your wallets. Check regularly to see if any of your wallets become compromised by too much exposure.</div>
+    <div class="faq-item">
+      <div class="faq-num">03</div>
+      <div class="faq-title">How can I stay up to date on my exposure?</div>
+      <div class="faq-body">Cleo gives real-time intelligence about the level of exposure for any of your wallets. Check regularly to see if any of your wallets become compromised by too much visibility.</div>
     </div>
   </div>
 </div>
@@ -347,39 +411,137 @@ async function examine() {
   }
 }
 
+// ── TAB NAVIGATION ────────────────────────────────────────────────────────────
+const TABS = ['exposure', 'privacy', 'profile'];
+const cardTabState = {};
+
+function switchTab(cardId, idx) {
+  idx = Math.max(0, Math.min(2, idx));
+  cardTabState[cardId] = idx;
+  const panels = document.getElementById('panels-' + cardId);
+  const indicator = document.getElementById('tab-ind-' + cardId);
+  const tabs = document.querySelectorAll('.card-tab[data-card="' + cardId + '"]');
+  if (panels) panels.style.transform = `translateX(-${idx * 100}%)`;
+  if (indicator) {
+    indicator.style.width = (100/3) + '%';
+    indicator.style.transform = `translateX(${idx * 100}%)`;
+  }
+  tabs.forEach((t, i) => t.classList.toggle('active', i === idx));
+}
+
+function handleArrow(cardId, dir) {
+  const cur = cardTabState[cardId] ?? 0;
+  switchTab(cardId, cur + dir);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+    const focused = document.activeElement?.closest('[data-card-root]');
+    if (focused) {
+      const id = focused.dataset.cardRoot;
+      switchTab(id, (cardTabState[id]??0) + (e.key === 'ArrowRight' ? 1 : -1));
+    }
+  }
+});
+
+// ── BUBBLE MAP ────────────────────────────────────────────────────────────────
+function buildBubbleMap(ap, mapId) {
+  if (!ap) return '';
+  const W = 300, H = 270, cx = W/2, cy = H/2 - 10;
+  const nodeMap = new Map();
+  const addNode = (addr, count, type, label, isPrivacy) => {
+    if (!addr) return;
+    const key = addr.slice(0, 12);
+    if (!nodeMap.has(key)) nodeMap.set(key, { addr, count: 0, type, label, isPrivacy });
+    nodeMap.get(key).count = Math.max(nodeMap.get(key).count, count || 1);
+  };
+  ap.fundingSources.forEach(f => addNode(f.address, 2, 'funding', f.label, f.isPrivacy));
+  ap.topSendTo.forEach(n => addNode(n.address, n.count, 'send', n.label, n.isPrivacy));
+  ap.topReceiveFrom.forEach(n => addNode(n.address, n.count, 'recv', n.label, n.isPrivacy));
+
+  const nodes = [...nodeMap.values()].slice(0, 9);
+  if (nodes.length === 0) return '<div class="ap-empty" style="padding:24px;text-align:center;">No counterparties detected.</div>';
+
+  const maxCount = Math.max(...nodes.map(n => n.count), 1);
+  const angleStep = (2 * Math.PI) / nodes.length;
+  const radius = 88;
+  const colors = { funding:'#7a58e0', send:'#c84020', recv:'#1a8a40' };
+  const colorPrivacy = '#008878';
+
+  let lines = '', circles = '';
+  nodes.forEach((n, i) => {
+    const angle = i * angleStep - Math.PI / 2;
+    const nx = cx + radius * Math.cos(angle);
+    const ny = cy + radius * Math.sin(angle);
+    const nodeR = 7 + (n.count / maxCount) * 11;
+    const col = n.isPrivacy ? colorPrivacy : (n.label ? '#7a58e0' : (colors[n.type] || '#b0956a'));
+    const addrShort = n.addr.slice(0,4) + '..' + n.addr.slice(-4);
+    const labelDisplay = n.label || addrShort;
+    const delay = i * 80;
+    const typeWord = n.type === 'funding' ? 'IN' : n.type === 'send' ? 'OUT' : 'RECV';
+
+    lines += `<line x1="${cx.toFixed(1)}" y1="${cy.toFixed(1)}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="${col}" stroke-width="1" stroke-opacity="0.2" stroke-dasharray="3 3" style="animation:line-dash 2s linear infinite ${delay}ms"/>`;
+    circles += `<circle cx="${nx.toFixed(1)}" cy="${ny.toFixed(1)}" r="${nodeR}" fill="${col}" fill-opacity="0.15" stroke="${col}" stroke-width="1.5" class="bubble-node" data-addr="${n.addr}" data-label="${n.label||''}" data-type="${n.type}" data-count="${n.count}" onmouseenter="showBubbleTip(event,'${mapId}')" onmouseleave="hideBubbleTip('${mapId}')" style="cursor:pointer;"/>`;
+    circles += `<text x="${nx.toFixed(1)}" y="${(ny + nodeR + 9).toFixed(1)}" text-anchor="middle" font-family="'Space Mono',monospace" font-size="7" fill="${col}" opacity="0.85" pointer-events="none">${labelDisplay}</text>`;
+    circles += `<text x="${nx.toFixed(1)}" y="${(ny + nodeR + 17).toFixed(1)}" text-anchor="middle" font-family="'Space Mono',monospace" font-size="5.5" fill="${col}" opacity="0.5" pointer-events="none">${typeWord}${n.count > 1 ? ' x'+n.count : ''}</text>`;
+  });
+
+  const centerCircle = `<circle cx="${cx}" cy="${cy}" r="22" fill="var(--accent)" fill-opacity="0.1" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="2 4" style="animation:line-dash 4s linear infinite reverse"/>
+    <text x="${cx}" y="${cy-3}" text-anchor="middle" font-family="'Space Mono',monospace" font-size="6.5" fill="var(--accent)" font-weight="700" pointer-events="none">THIS</text>
+    <text x="${cx}" y="${cy+7}" text-anchor="middle" font-family="'Space Mono',monospace" font-size="6.5" fill="var(--accent)" font-weight="700" pointer-events="none">WALLET</text>`;
+
+  const legendY = H - 48;
+  const legend = `<rect x="6" y="${legendY}" width="6" height="6" fill="#7a58e0" opacity="0.7"/>
+    <text x="16" y="${legendY+5}" font-family="'Space Mono',monospace" font-size="6.5" fill="#7a58e0">Funding / CEX</text>
+    <rect x="6" y="${legendY+11}" width="6" height="6" fill="#c84020" opacity="0.7"/>
+    <text x="16" y="${legendY+16}" font-family="'Space Mono',monospace" font-size="6.5" fill="#c84020">Outbound</text>
+    <rect x="6" y="${legendY+22}" width="6" height="6" fill="#1a8a40" opacity="0.7"/>
+    <text x="16" y="${legendY+27}" font-family="'Space Mono',monospace" font-size="6.5" fill="#1a8a40">Inbound</text>
+    <rect x="6" y="${legendY+33}" width="6" height="6" fill="#008878" opacity="0.7"/>
+    <text x="16" y="${legendY+38}" font-family="'Space Mono',monospace" font-size="6.5" fill="#008878">Privacy Protocol</text>`;
+
+  return `<div class="bubble-map-wrap"><div class="bubble-map-title">// Connection Map</div><div style="position:relative;"><svg class="bubble-map-svg" id="${mapId}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${lines}${centerCircle}${circles}${legend}</svg><div class="bubble-tooltip" id="tip-${mapId}"></div></div></div>`;
+}
+
+function showBubbleTip(e, mapId) {
+  const node = e.target;
+  const addr = node.dataset.addr;
+  const label = node.dataset.label;
+  const type = node.dataset.type;
+  const count = node.dataset.count;
+  if (!addr) return;
+  const tip = document.getElementById('tip-' + mapId);
+  if (!tip) return;
+  const typeWord = type === 'funding' ? 'Funder' : type === 'send' ? 'Send-to' : 'Receive-from';
+  tip.innerHTML = `${label ? '<strong>' + label + '</strong><br>' : ''}${addr.slice(0,8)}...${addr.slice(-8)}<br><span style="opacity:0.6">${typeWord} · ${count}×</span>`;
+  tip.style.opacity = '1';
+  const rect = e.target.closest('svg').getBoundingClientRect();
+  tip.style.left = (e.clientX - rect.left + 10) + 'px';
+  tip.style.top  = (e.clientY - rect.top  - 8) + 'px';
+}
+function hideBubbleTip(mapId) {
+  const tip = document.getElementById('tip-' + mapId);
+  if (tip) tip.style.opacity = '0';
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
 function renderFindings(findings) {
   return findings.map(f => {
-    const titleHTML = f.txSignature
-      ? `<a href="https://www.orb.so/tx/${f.txSignature}" target="_blank" style="color:var(--accent);font-family:'Space Mono',monospace;font-size:9px;text-decoration:none;">${f.title}</a>`
-      : f.title;
-    const pumpLink = f.isPumpFun
-      ? `<div style="margin-top:5px;"><a href="https://pump.fun" target="_blank" style="color:var(--accent);font-family:'Space Mono',monospace;font-size:8px;text-decoration:none;">View Leaderboard →</a></div>`
+    const pumpLink = (f.isPumpFun && f.txSignature)
+      ? `<a href="https://pump.fun/tx/${f.txSignature}" target="_blank" rel="noopener" style="font-family:'Space Mono',monospace;font-size:8px;color:var(--accent);text-decoration:none;display:block;margin-top:6px;">View Leaderboard →</a>`
       : '';
-    return `<div class="finding ${f.type}">
-      <div class="finding-badge ${f.type}">${f.badge}</div>
-      <div class="finding-title">${titleHTML}</div>
-      <div class="finding-detail">${f.detail}</div>${pumpLink}
-    </div>`;
+    const titleHTML = (f.txSignature && !f.isPumpFun)
+      ? `<a href="https://solscan.io/tx/${f.txSignature}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${f.title}</a>`
+      : f.title;
+    return `<div class="finding ${f.type}"><div class="finding-badge ${f.type}">${f.badge}</div><div class="finding-title">${titleHTML}</div><div class="finding-detail">${f.detail}</div>${pumpLink}</div>`;
   }).join('');
 }
 
 function makeDial(score, idSuffix) {
   const circ = 245;
   const offset = Math.round(circ - (score / 100) * circ);
-  return `<div class="wallet-card-dial">
-    <div class="dial-ring">
-      <svg viewBox="0 0 90 90">
-        <circle cx="45" cy="45" r="39" fill="none" stroke="#e0d4c0" stroke-width="4"/>
-        <circle cx="45" cy="45" r="39" fill="none" stroke="var(--accent)" stroke-width="4"
-          stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/>
-      </svg>
-      <div class="dial-num">${score}<span>/100</span></div>
-    </div>
-    <div class="dial-label">Lens Score</div>
-  </div>`;
+  return `<div class="wallet-card-dial"><div class="dial-ring"><svg viewBox="0 0 90 90"><circle cx="45" cy="45" r="39" fill="none" stroke="#e0d4c0" stroke-width="4"/><circle cx="45" cy="45" r="39" fill="none" stroke="var(--accent)" stroke-width="4" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/></svg><div class="dial-num">${score}<span>/100</span></div></div><div class="dial-label">Lens Score</div></div>`;
 }
-
-let _privacyExpandState = {};
 
 function togglePrivacyRow(id) {
   const el = document.getElementById('priv-expand-' + id);
@@ -390,240 +552,112 @@ function togglePrivacyRow(id) {
   arrow.textContent = open ? '▸' : '▾';
 }
 
-function renderPrivacyCard(p, cardIdx) {
-  const uid = cardIdx + '-' + Date.now();
+// ── PANEL RENDERERS ───────────────────────────────────────────────────────────
+function renderExposurePanel(d) {
+  return `<div class="risk-section-title">// Risk Breakdown</div>
+    <div class="risk-rows">${d.risks.map(r => `<div class="risk-row"><div class="risk-name">${r.name}</div><div class="risk-bar-bg"><div class="risk-bar-fill ${r.tier}" style="width:0%" data-target="${r.value}%"></div></div><div class="risk-val ${r.tier}">${r.value}</div></div>`).join('')}</div>
+    <div class="risk-section-title">// Specific Findings</div>
+    <div class="findings">${renderFindings(d.findings)}</div>`;
+}
+
+function renderPrivacyPanel(p, cardIdx) {
+  if (!p) return '<div style="padding:20px;font-family:\'Space Mono\',monospace;font-size:10px;color:var(--text-dim);">No privacy data.</div>';
+  const uid = cardIdx + '-prv';
   const rows = [
-    {
-      key: 'protocol',
-      name: 'Protocol Usage',
-      value: parseFloat(p.protocolUsage || 0),
-      explanation: p.privacyExplain?.protocolUsage || (
-        parseFloat(p.protocolUsage) > 0
-          ? `Interacted with ${(p.protocolsUsed||[]).filter(x=>x!=='None detected').join(', ') || 'privacy protocols'}.`
-          : 'No known privacy protocol interactions detected in the last 100 transactions.'
-      ),
-    },
-    {
-      key: 'timing',
-      name: 'Timing Entropy',
-      value: parseFloat(p.timingEntropy || p.opacity || 0),
-      explanation: p.privacyExplain?.timingEntropy || (
-        parseFloat(p.timingEntropy || p.opacity) >= 75
-          ? 'Privacy protocol interactions are well-spaced over time — difficult to correlate deposits and withdrawals.'
-          : parseFloat(p.timingEntropy || p.opacity) >= 45
-          ? 'Some time gap between privacy interactions, but same-day activity leaves timing patterns.'
-          : 'No privacy protocol activity detected, or interactions are too close together to obscure timing.'
-      ),
-    },
-    {
-      key: 'amount',
-      name: 'Amount Obfuscation',
-      value: parseFloat(p.amountObfuscation || 0),
-      explanation: p.privacyExplain?.amountObfuscation || (
-        parseFloat(p.amountObfuscation) >= 70
-          ? 'Transfer amounts are highly varied — hard to link deposits to withdrawals by size.'
-          : parseFloat(p.amountObfuscation) >= 50
-          ? 'Moderate variation in transfer sizes. Some amount-based correlation is possible.'
-          : 'Transfer amounts are uniform or sparse — amounts could be used to link on-chain activity.'
-      ),
-    },
-    {
-      key: 'address',
-      name: 'Address Diversity',
-      value: parseFloat(p.addressReuse || 0),
-      explanation: p.privacyExplain?.addressReuse || (
-        parseFloat(p.addressReuse) >= 70
-          ? 'Interacts with many unique counterparties — low address reuse makes fingerprinting harder.'
-          : parseFloat(p.addressReuse) >= 40
-          ? 'Moderate counterparty diversity. Some repeated interactions with the same addresses.'
-          : 'High address reuse detected — repeated interactions with the same counterparties create a traceable pattern.'
-      ),
-    },
-    {
-      key: 'funding',
-      name: 'Funding Diversity',
-      value: parseFloat(p.fundingDiversity || p.fundingSource || 0),
-      explanation: p.privacyExplain?.fundingDiversity || (
-        parseFloat(p.fundingDiversity || p.fundingSource) >= 80
-          ? 'Funded via a privacy protocol or multiple independent sources — origin is well-obscured.'
-          : parseFloat(p.fundingDiversity || p.fundingSource) >= 45
-          ? 'Funded from a small number of sources. Some traceability to origin wallets.'
-          : 'Funded from a single traceable source — easy to link to an originating wallet.'
-      ),
-    },
+    { key:'protocol', name:'Protocol Usage',    value:parseFloat(p.protocolUsage||0), expl:p.privacyExplain?.protocolUsage||'' },
+    { key:'timing',   name:'Timing Entropy',     value:parseFloat(p.timingEntropy||p.opacity||0), expl:p.privacyExplain?.timingEntropy||'' },
+    { key:'amount',   name:'Amount Obfuscation', value:parseFloat(p.amountObfuscation||0), expl:p.privacyExplain?.amountObfuscation||'' },
+    { key:'address',  name:'Address Diversity',  value:parseFloat(p.addressReuse||0), expl:p.privacyExplain?.addressReuse||'' },
+    { key:'funding',  name:'Funding Diversity',  value:parseFloat(p.fundingDiversity||p.fundingSource||0), expl:p.privacyExplain?.fundingDiversity||'' },
   ];
-
-  const protocols = (p.protocolsUsed && p.protocolsUsed.filter(x => x !== 'None detected').length > 0)
-    ? p.protocolsUsed.join('  ·  ')
-    : 'None detected';
-
-  return `
-    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
-      <div class="risk-section-title" style="color:#008878;">
-        // Privacy Score &nbsp;<span style="background:#008878;color:white;font-family:'Space Mono',monospace;font-size:8px;padding:2px 8px;font-weight:400;">${parseFloat(p.total).toFixed(1)}/100</span>
-      </div>
-      <div style="display:grid;gap:2px;margin-bottom:8px;">
-        ${rows.map((r, i) => {
-          const rowId = uid + '-' + r.key;
-          return `
-          <div style="background:white;border:1px solid transparent;cursor:pointer;" onclick="togglePrivacyRow('${rowId}')">
-            <div class="risk-row" style="border:none;background:transparent;">
-              <div class="risk-name" style="display:flex;align-items:center;gap:6px;">
-                <span id="priv-arrow-${rowId}" style="color:#008878;font-size:10px;width:10px;">▸</span>
-                ${r.name}
-              </div>
-              <div class="risk-bar-bg"><div class="privacy-bar-fill" style="width:${r.value}%"></div></div>
-              <div class="privacy-val">${r.value.toFixed(1)}</div>
-            </div>
-            <div id="priv-expand-${rowId}" style="display:none;padding:8px 14px 10px 32px;font-family:'Space Mono',monospace;font-size:9px;color:var(--text-mid);line-height:1.7;border-top:1px solid var(--border);background:rgba(0,136,120,0.03);">
-              ${r.explanation}
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-      <div class="privacy-protocols"><span style="color:var(--text-dim);letter-spacing:0.15em;font-size:8px;">// PROTOCOLS  </span>${protocols}</div>
-    </div>`;
+  const protocols = (p.protocolsUsed && p.protocolsUsed.filter(x=>x!=='None detected').length>0) ? p.protocolsUsed.join('  ·  ') : 'None detected';
+  return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+    <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:0.3em;text-transform:uppercase;color:#008878;">// Privacy Score</div>
+    <span style="background:#008878;color:white;font-family:'Space Mono',monospace;font-size:8px;padding:2px 8px;">${parseFloat(p.total).toFixed(1)}/100</span>
+    </div>
+    <div style="display:grid;gap:2px;margin-bottom:10px;">
+    ${rows.map(r => { const rowId = uid+'-'+r.key; return `<div style="background:white;border:1px solid transparent;cursor:pointer;" onclick="togglePrivacyRow('${rowId}')"><div class="risk-row" style="border:none;background:transparent;"><div class="risk-name" style="display:flex;align-items:center;gap:6px;"><span id="priv-arrow-${rowId}" style="color:#008878;font-size:10px;width:10px;">▸</span>${r.name}</div><div class="risk-bar-bg"><div class="privacy-bar-fill" style="width:0%" data-target="${r.value}%"></div></div><div class="privacy-val">${r.value.toFixed(1)}</div></div><div id="priv-expand-${rowId}" style="display:none;padding:8px 14px 10px 32px;font-family:'Space Mono',monospace;font-size:9px;color:var(--text-mid);line-height:1.7;border-top:1px solid var(--border);background:rgba(0,136,120,0.03);">${r.expl}</div></div>`; }).join('')}
+    </div>
+    <div class="privacy-protocols"><span style="color:var(--text-dim);letter-spacing:0.15em;font-size:8px;">// PROTOCOLS  </span>${protocols}</div>`;
 }
 
-function renderAddressProfile(ap) {
-  if (!ap) return '';
-
-  const fmt = addr => addr.slice(0, 6) + '...' + addr.slice(-6);
-  const solscanAddr = addr => `https://solscan.io/account/${addr}`;
-
-  const addrRow = ({ address, count, label, isPrivacy }) => {
-    const labelTag = label
-      ? `<span class="ap-label cex">${label}</span>`
-      : isPrivacy
-      ? `<span class="ap-label privacy">Privacy</span>`
-      : '';
-    const countTag = count !== undefined ? `<span class="ap-count">${count}×</span>` : '';
-    return `<div class="ap-row">
+function renderProfilePanel(ap, mapId) {
+  if (!ap) return '<div style="padding:20px;font-family:\'Space Mono\',monospace;font-size:10px;color:var(--text-dim);">No profile data.</div>';
+  const fmt = a => a.slice(0,5)+'..'+a.slice(-5);
+  const ss = a => 'https://solscan.io/account/'+a;
+  const tag = (label, isPrivacy) => label ? `<span class="ap-tag cex">${label}</span>` : isPrivacy ? `<span class="ap-tag privacy">Privacy</span>` : '';
+  const addrRow = ({address,count,label,isPrivacy}) => `<div class="ap-row"><div><a class="ap-addr" href="${ss(address)}" target="_blank">${fmt(address)}</a>${tag(label,isPrivacy)}</div><span class="ap-count">${count}x</span></div>`;
+  const fundRow = f => `<div class="ap-row"><div><a class="ap-addr" href="${ss(f.address)}" target="_blank">${fmt(f.address)}</a>${tag(f.label,f.isPrivacy)}</div><span class="ap-count">${f.amountSol} SOL</span></div>`;
+  const metaItems = [{l:'SOL Balance',v:ap.solBalance},{l:'Tokens',v:ap.tokenCount},{l:'Txns Scanned',v:ap.txnCount},{l:'Wallet Age',v:ap.walletAge!==null?ap.walletAge+'d+':'Unknown'}];
+  if (ap.domain) metaItems.push({l:'.sol Domain',v:ap.domain+'.sol'});
+  return `<div class="ap-meta-grid">${metaItems.map(m=>`<div class="ap-meta-cell"><div class="ap-meta-label">${m.l}</div><div class="ap-meta-value">${m.v}</div></div>`).join('')}</div>
+    <div class="profile-layout">
       <div>
-        <a class="ap-addr" href="${solscanAddr(address)}" target="_blank" rel="noopener">${fmt(address)}</a>${labelTag}
+        <div class="ap-section"><div class="ap-section-label">Funding Sources</div>${ap.fundingSources.length?ap.fundingSources.map(fundRow).join(''):'<div class="ap-empty">No inbound found.</div>'}</div>
+        <div class="ap-section"><div class="ap-section-label">Most Frequent Send-To</div>${ap.topSendTo.length?ap.topSendTo.map(addrRow).join(''):'<div class="ap-empty">No outbound detected.</div>'}</div>
+        <div class="ap-section"><div class="ap-section-label">Most Frequent Receive-From</div>${ap.topReceiveFrom.length?ap.topReceiveFrom.map(addrRow).join(''):'<div class="ap-empty">No inbound detected.</div>'}</div>
+        ${ap.cexActivity.length?`<div class="ap-section"><div class="ap-section-label">Exchange Activity</div>${ap.cexActivity.map(c=>`<div class="ap-row"><span class="ap-addr">${c.name}</span><span class="ap-count">${c.txCount} txns</span></div>`).join('')}</div>`:''}
       </div>
-      ${countTag}
+      <div>${buildBubbleMap(ap,mapId)}</div>
     </div>`;
-  };
-
-  // Funding sources
-  let fundingHTML = '';
-  if (ap.fundingSources.length === 0) {
-    fundingHTML = '<div class="ap-empty">No inbound transfers found in last 100 txns.</div>';
-  } else {
-    fundingHTML = ap.fundingSources.map(f => {
-      const labelTag = f.label
-        ? `<span class="ap-label cex">${f.label}</span>`
-        : f.isPrivacy
-        ? `<span class="ap-label privacy">Privacy Protocol</span>`
-        : '';
-      return `<div class="ap-row">
-        <div>
-          <a class="ap-addr" href="${solscanAddr(f.address)}" target="_blank" rel="noopener">${fmt(f.address)}</a>${labelTag}
-        </div>
-        <span class="ap-count">${f.amountSol} SOL</span>
-      </div>`;
-    }).join('');
-  }
-
-  // Top send-to
-  const sendHTML = ap.topSendTo.length === 0
-    ? '<div class="ap-empty">No outbound transfers detected.</div>'
-    : ap.topSendTo.map(a => addrRow(a)).join('');
-
-  // Top receive-from
-  const recvHTML = ap.topReceiveFrom.length === 0
-    ? '<div class="ap-empty">No inbound transfers detected.</div>'
-    : ap.topReceiveFrom.map(a => addrRow(a)).join('');
-
-  // CEX activity
-  const cexHTML = ap.cexActivity.length === 0
-    ? ''
-    : `<div class="ap-section">
-        <div class="ap-section-label">Exchange Activity</div>
-        ${ap.cexActivity.map(c => `<div class="ap-row"><span class="ap-addr">${c.name}</span><span class="ap-count">${c.txCount} txn${c.txCount > 1 ? 's' : ''}</span></div>`).join('')}
-      </div>`;
-
-  const ageTxt = ap.walletAge !== null
-    ? `<span class="ap-meta-item">Age (scanned window) <strong>${ap.walletAge}d+</strong></span>`
-    : '';
-
-  return `<div class="address-profile">
-    <div class="ap-title-row">
-      <span class="ap-title">// Address Profile</span>
-    </div>
-    <div class="ap-meta">
-      <span class="ap-meta-item">Balance <strong>${ap.solBalance} SOL</strong></span>
-      <span class="ap-meta-item">Tokens <strong>${ap.tokenCount}</strong></span>
-      <span class="ap-meta-item">Txns scanned <strong>${ap.txnCount}</strong></span>
-      ${ageTxt}
-      ${ap.domain ? `<span class="ap-meta-item">Domain <strong>${ap.domain}.sol</strong></span>` : ''}
-    </div>
-    <div class="ap-section">
-      <div class="ap-section-label">Funding Sources (earliest inbound)</div>
-      ${fundingHTML}
-    </div>
-    <div class="ap-section">
-      <div class="ap-section-label">Most Frequent Send-To</div>
-      ${sendHTML}
-    </div>
-    <div class="ap-section">
-      <div class="ap-section-label">Most Frequent Receive-From</div>
-      ${recvHTML}
-    </div>
-    ${cexHTML}
-  </div>`;
 }
 
+// ── MAIN RENDER ───────────────────────────────────────────────────────────────
 function renderResults(results) {
   const container = document.getElementById('wallet-cards');
   container.innerHTML = results.map((d, i) => {
-    const short = d.address.slice(0, 6) + '...' + d.address.slice(-6);
-    return `<div class="wallet-card">
+    const short = d.address.slice(0,6) + '...' + d.address.slice(-6);
+    const cardId = 'card-' + i;
+    const mapId  = 'map-' + i;
+    cardTabState[cardId] = 0;
+    return `<div class="wallet-card" data-card-root="${cardId}" tabindex="0">
+      <div class="card-corner tl"></div><div class="card-corner tr"></div>
+      <div class="card-corner bl"></div><div class="card-corner br"></div>
       <div class="wallet-card-header">
         <div>
-          <div class="wallet-card-address">WALLET ${i + 1} // ${short}</div>
+          <div class="wallet-card-address">WALLET ${i+1} // ${short}</div>
           <div class="wallet-card-verdict">${d.verdict}</div>
           <div class="wallet-card-tagline">"${d.tagline}"</div>
         </div>
         ${makeDial(d.score, i)}
       </div>
-      <div class="wallet-card-body">
-        <div class="risk-section-title">// Risk Breakdown</div>
-        <div class="risk-rows">${d.risks.map(r => `
-          <div class="risk-row">
-            <div class="risk-name">${r.name}</div>
-            <div class="risk-bar-bg"><div class="risk-bar-fill ${r.tier}" style="width:${r.value}%"></div></div>
-            <div class="risk-val ${r.tier}">${r.value}</div>
-          </div>`).join('')}
+      <div class="card-tabs">
+        <button class="card-nav-arrow left" onclick="handleArrow('${cardId}',-1)">◂</button>
+        <button class="card-tab active" data-card="${cardId}" onclick="switchTab('${cardId}',0)">Exposure</button>
+        <button class="card-tab"        data-card="${cardId}" onclick="switchTab('${cardId}',1)">Privacy</button>
+        <button class="card-tab"        data-card="${cardId}" onclick="switchTab('${cardId}',2)">Profile</button>
+        <button class="card-nav-arrow right" onclick="handleArrow('${cardId}',1)">▸</button>
+        <div class="card-tab-indicator" id="tab-ind-${cardId}" style="width:33.33%;transform:translateX(0%)"></div>
+      </div>
+      <div class="card-panels-wrap">
+        <div class="card-panels" id="panels-${cardId}">
+          <div class="card-panel">${renderExposurePanel(d)}</div>
+          <div class="card-panel">${renderPrivacyPanel(d.privacy, i)}</div>
+          <div class="card-panel">${renderProfilePanel(d.addressProfile, mapId)}</div>
         </div>
-        <div class="risk-section-title">// Specific Findings</div>
-        <div class="findings">${renderFindings(d.findings)}</div>
-        ${d.privacy ? renderPrivacyCard(d.privacy, i) : ''}
-        ${d.addressProfile ? renderAddressProfile(d.addressProfile) : ''}
       </div>
     </div>`;
   }).join('');
 
-  // Update speech bubble based on first result's privacy score
+  requestAnimationFrame(() => {
+    document.querySelectorAll('[data-target]').forEach(el => {
+      setTimeout(() => { el.style.width = el.dataset.target; }, 100);
+    });
+  });
+
   const firstPrivacy = results.find(r => r.privacy)?.privacy;
   if (firstPrivacy) {
     const totalPriv = parseFloat(firstPrivacy.total);
-    const bubble = totalPriv < 30
-      ? '"Low privacy footprint. Very traceable. My lens sees all."'
-      : totalPriv < 60
-      ? '"Some privacy measures detected. Room for improvement."'
+    const bubble = totalPriv < 30 ? '"Low privacy footprint. Very traceable. My lens sees all."'
+      : totalPriv < 60 ? '"Some privacy measures detected. Room for improvement."'
       : '"Strong privacy hygiene. You are harder to track."';
     document.getElementById('speech-bubble').textContent = bubble;
   }
-
-  // Show save button & results
   document.getElementById('save-btn').textContent = '+ Save All to Portfolio';
   document.getElementById('save-btn').classList.remove('saved');
   document.getElementById('results-section').classList.add('visible');
-  document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('results-section').scrollIntoView({ behavior:'smooth', block:'start' });
 }
-
 
 
 function saveToPortfolio() {

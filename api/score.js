@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 const cache = new Map();
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
 // Version stamp — bump this to auto-invalidate all cached results on redeploy
-const CACHE_VERSION = '2025-03-v6';
+const CACHE_VERSION = '2025-03-v7';
 
 export function getCached(wallet) {
   const entry = cache.get(wallet);
@@ -63,34 +63,9 @@ const PRIVACY_MODERATE = new Set([
   'vanshF62ku4jVVdf8DS47SXuJC1rq8qokGSANAomhey',  // Vanish: Trading Program (confirmed on-chain)
 ]);
 
-// PrivacyCash pool accounts — top recurring accounts from real transaction analysis
-// Transfers to/from these = PrivacyCash deposit even if program ID not in recent txns
-const PRIVACY_CASH_ACCOUNTS = new Set([
-  '2vV7xhCMWRrcLiwGoTaTRgvx98ku98TRJKPXhsS8jvBV', // PrivacyCash pool account #1 (21x frequency)
-  'AF8VuwCncKd5ZBnLYYnMjqh4vLch8mjqE75sFe5ZjRFW', // PrivacyCash pool account #2 (17x frequency)
-  'AWexibGxNFKTa1b5R5MN4PJr9HWnWRwf8EW9g8cLx3dM', // PrivacyCash pool account #3 (16x frequency)
-  '6VVKJ44WTJGCksTGJHjf1kJWZaMf9Nswgj6w7Dtrw55D', // PrivacyCash pool account #4 (15x frequency)
-  '4AV2Qzp3N4c9RfzyEbNZs2wqWfW4EwKnnxFAZCndvfGh', // PrivacyCash pool account #5 (15x frequency)
-  'Hz1x9MCs79tz2s5S4DQ6RMYQcJYa9WSt5kNxwYs6eEai', // PrivacyCash pool account #6
-  'AKyn6LoQp4UkuT11QfVjaYfDUjvFfxH8Y1HjT8yNYBnH', // PrivacyCash pool account #7
-  'GiaDw4ne9BCGLSiCpap3vDq9Sy7gXD1xTRPPNFJQKcCX', // PrivacyCash pool account #8
-  'BF6roxGA4yKCkpZJKEGXkHLoFCXv3HgqbWMXcjHEWzjE', // PrivacyCash pool account #9
-  'Anb2xMGW4uinXWiHaTq5fnQCwSzUT98NJrZXeQJd5vh9', // PrivacyCash pool account #10
-]);
-
-// Vanish trading pool accounts — funds in these = Vanish privacy interaction
-const VANISH_ACCOUNTS = new Set([
-  '7ozoNcVqgptbAUHjLR1vNHgEfKiE5aYufStEHzJhxKeG', // Vanish: Trading Account #1
-  'DM1kVwqbNJYeDgKn2T3UbCHqquSh3PAYHJpRYfTCcbrK', // Vanish: Trading Account #2
-  '2bxLnNUgnbf7d4CX4sfdY2YoJkKirNc5FHE6awRwKKYY', // Vanish: Trading Account #3
-  '3PMpWWXCVUrkhHpFWPH1prxBYxQ4SV4rucJchYRSBojH', // Vanish: Trading Account #4
-  '8MjKXQgj97NPVNhj9gJrQNP7BibGCGkFMVJ2qZsC58E',  // Vanish: Trading Account #5
-  'Evamno6in8wQGBKUnVbu3FQV5eNwn2ttE5456yDbnodR',  // Vanish: Trading Account #6
-  '49zHSpdFZaSc92ygkooaMGVeeriLSXX5ujriDWVxTwVS',  // Vanish: Trading Account #7
-  '37p56C7BLiMyG2jEa7zTNSewj94C34SuFEnxnRZ87kWw',  // Vanish: Trading Account #8
-  '2QbCx4cTy11nv5FieXJkAKPvSVGdFcZPFdDMTo9vEfqm',  // Vanish: Trading Account #9
-  '7juKfkXpvYHqjhxwK1Se2Mod96hHETHNduC9BMxBdxyt',  // Vanish: Trading Account #10
-]);
+// NOTE: Pool account detection removed — was causing false positives.
+// Detection is now program-ID only. A wallet must have directly invoked the
+// protocol's program for it to count. Proximity to pool accounts is not sufficient evidence.
 
 // Tier 3: Mild — cross-chain bridges (break Solana trail)
 const BRIDGE_STRONG = new Set([
@@ -222,27 +197,18 @@ function scorePrivacy(txns, walletAddress) {
     tx.accountData?.some(a => PRIVACY_STRONG.has(a.account))
   );
 
-  // PrivacyCash: detect via program ID OR via transfers to/from known pool accounts
-  const pcProgramTxns = txns.filter(tx => tx.accountData?.some(a => PRIVACY_STRONG.has(a.account) &&
-    (a.account === '9fhQBbumKEFuXtMBDw8AaQyAjCorLGJQiS3skWZdQyQD' || a.account === 'L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95')
-  ));
-  const pcAccountTxns = txns.filter(tx =>
-    (tx.nativeTransfers||[]).some(t => PRIVACY_CASH_ACCOUNTS.has(t.toUserAccount) || PRIVACY_CASH_ACCOUNTS.has(t.fromUserAccount)) ||
-    (tx.tokenTransfers||[]).some(t => PRIVACY_CASH_ACCOUNTS.has(t.toUserAccount) || PRIVACY_CASH_ACCOUNTS.has(t.fromUserAccount)) ||
-    (tx.accountData||[]).some(a => PRIVACY_CASH_ACCOUNTS.has(a.account))
+  // PrivacyCash: program ID only — wallet must have directly invoked the program
+  const privacyCashTxns = txns.filter(tx =>
+    tx.accountData?.some(a =>
+      a.account === '9fhQBbumKEFuXtMBDw8AaQyAjCorLGJQiS3skWZdQyQD' ||
+      a.account === 'L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95'
+    )
   );
-  const pcSigs = new Set([...pcProgramTxns, ...pcAccountTxns].map(t => t.signature));
-  const privacyCashTxns = txns.filter(tx => pcSigs.has(tx.signature));
+  const pcSigs = new Set(privacyCashTxns.map(t => t.signature));
 
-  // Vanish: detect via program ID OR via transfers to/from known trading pool accounts
-  const vanishProgramTxns = txns.filter(tx => tx.accountData?.some(a => PRIVACY_MODERATE.has(a.account)));
-  const vanishAccountTxns = txns.filter(tx =>
-    (tx.nativeTransfers||[]).some(t => VANISH_ACCOUNTS.has(t.toUserAccount) || VANISH_ACCOUNTS.has(t.fromUserAccount)) ||
-    (tx.tokenTransfers||[]).some(t => VANISH_ACCOUNTS.has(t.toUserAccount) || VANISH_ACCOUNTS.has(t.fromUserAccount)) ||
-    (tx.accountData||[]).some(a => VANISH_ACCOUNTS.has(a.account))
-  );
-  const vanishSigs = new Set([...vanishProgramTxns, ...vanishAccountTxns].map(t => t.signature));
-  const vanishTxns = txns.filter(tx => vanishSigs.has(tx.signature));
+  // Vanish: program ID only — wallet must have directly invoked vanshF62...
+  const vanishTxns = txns.filter(tx => tx.accountData?.some(a => PRIVACY_MODERATE.has(a.account)));
+  const vanishSigs = new Set(vanishTxns.map(t => t.signature));
 
   // Combine all moderate-tier (Vanish + PrivacyCash both count here for scoring weight)
   const moderateSigs = new Set([...vanishSigs, ...pcSigs]);
@@ -456,8 +422,7 @@ const NOISE_ADDRESSES = new Set([
   ...DEX_PROGRAMS,
   ...PRIVACY_STRONG,
   ...PRIVACY_MODERATE,
-  ...PRIVACY_CASH_ACCOUNTS,
-  ...VANISH_ACCOUNTS,
+
   ...BRIDGE_STRONG,
   ...BRIDGE_WEAK,
   '11111111111111111111111111111111',          // System program
@@ -513,7 +478,7 @@ function buildAddressProfile(txns, walletAddress, bals, domain) {
       address: f.address,
       amountSol: (f.amount / 1e9).toFixed(3),
       label: CEX_LABELS.get(f.address) ?? null,
-      isPrivacy: PRIVACY_CASH_ACCOUNTS.has(f.address) || VANISH_ACCOUNTS.has(f.address)
+      isPrivacy: PRIVACY_STRONG.has(f.address) || PRIVACY_MODERATE.has(f.address)
         || PRIVACY_STRONG.has(f.address) || PRIVACY_MODERATE.has(f.address),
       sig: f.sig,
     }));
@@ -559,7 +524,7 @@ function buildAddressProfile(txns, walletAddress, bals, domain) {
         address,
         count,
         label: CEX_LABELS.get(address) ?? null,
-        isPrivacy: PRIVACY_CASH_ACCOUNTS.has(address) || VANISH_ACCOUNTS.has(address)
+        isPrivacy: PRIVACY_STRONG.has(address) || PRIVACY_MODERATE.has(address)
           || PRIVACY_STRONG.has(address) || PRIVACY_MODERATE.has(address),
       }));
 
