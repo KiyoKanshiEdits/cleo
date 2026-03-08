@@ -515,28 +515,30 @@ function buildAddressProfile(txns, walletAddress, bals, domain) {
     ? Math.floor((Date.now() / 1000 - oldestTs) / 86400) // days
     : null;
 
-  // ── Funding sources — first inbound native transfers to this wallet
-  // Take earliest txns and find who sent SOL to walletAddress
+  // ── Funding sources — aggregate inbound SOL per sender, sorted by total received
   const inboundTransfers = txns
     .flatMap(tx => (tx.nativeTransfers ?? []).map(t => ({ ...t, ts: tx.timestamp, sig: tx.signature })))
     .filter(t => t.toUserAccount === walletAddress && t.fromUserAccount && t.fromUserAccount !== walletAddress)
     .sort((a, b) => a.ts - b.ts);
 
-  // Deduplicate by sender, take earliest per sender
-  const seenFunders = new Map();
+  // Sum total SOL received from each sender, track earliest sig for reference
+  const funderTotals = new Map();
   for (const t of inboundTransfers) {
-    if (!seenFunders.has(t.fromUserAccount)) {
-      seenFunders.set(t.fromUserAccount, { address: t.fromUserAccount, amount: t.amount, ts: t.ts, sig: t.sig });
+    if (!funderTotals.has(t.fromUserAccount)) {
+      funderTotals.set(t.fromUserAccount, { address: t.fromUserAccount, total: 0, ts: t.ts, sig: t.sig });
     }
+    funderTotals.get(t.fromUserAccount).total += t.amount;
   }
-  const fundingSources = [...seenFunders.values()]
+  // Sort by total received descending, take top 3
+  const fundingSources = [...funderTotals.values()]
+    .filter(f => f.total > 0)
+    .sort((a, b) => b.total - a.total)
     .slice(0, 3)
     .map(f => ({
       address: f.address,
-      amountSol: (f.amount / 1e9).toFixed(3),
+      amountSol: (f.total / 1e9).toFixed(3),
       label: CEX_LABELS.get(f.address) ?? null,
-      isPrivacy: PRIVACY_STRONG.has(f.address) || PRIVACY_MODERATE.has(f.address)
-        || PRIVACY_STRONG.has(f.address) || PRIVACY_MODERATE.has(f.address),
+      isPrivacy: PRIVACY_STRONG.has(f.address) || PRIVACY_MODERATE.has(f.address),
       sig: f.sig,
     }));
 
