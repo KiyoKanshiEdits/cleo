@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cleo — Attack Path</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a0f;
+  --bg-card: #111118;
+  --bg-card-hover: #16161f;
+  --amber: #f0a500;
+  --amber-dim: rgba(240, 165, 0, 0.15);
+  --amber-glow: rgba(240, 165, 0, 0.4);
+  --red: #ff4444;
+  --red-dim: rgba(255, 68, 68, 0.15);
+  --red-glow: rgba(255, 68, 68, 0.3);
+  --green: #00cc88;
+  --green-dim: rgba(0, 204, 136, 0.15);
+  --text: #e8e8ef;
+  --text-dim: rgba(232, 232, 239, 0.5);
+  --text-muted: rgba(232, 232, 239, 0.3);
+  --border: rgba(240, 165, 0, 0.12);
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Space Grotesk', sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  z-index: 9999;
+}
+
+.header {
+  padding: 24px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+.header-left { display: flex; align-items: center; gap: 16px; }
+.header-logo { font-family: var(--mono); font-size: 20px; font-weight: 700; color: var(--amber); letter-spacing: 2px; text-transform: uppercase; }
+.header-tag { font-family: var(--mono); font-size: 11px; color: var(--red); background: var(--red-dim); padding: 4px 10px; border-radius: 3px; letter-spacing: 1px; text-transform: uppercase; }
+.header-back { font-family: var(--mono); font-size: 13px; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+.header-back:hover { color: var(--amber); }
+
+.search-section { max-width: 640px; margin: 60px auto 0; padding: 0 24px; text-align: center; }
+.search-title { font-family: var(--mono); font-size: 14px; color: var(--amber); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; }
+.search-subtitle { font-size: 14px; color: var(--text-dim); margin-bottom: 32px; line-height: 1.6; }
+.search-bar { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--bg-card); transition: border-color 0.3s; }
+.search-bar:focus-within { border-color: var(--amber); box-shadow: 0 0 20px rgba(240, 165, 0, 0.08); }
+.search-input { flex: 1; background: transparent; border: none; padding: 14px 18px; color: var(--text); font-family: var(--mono); font-size: 13px; outline: none; }
+.search-input::placeholder { color: var(--text-muted); }
+.search-btn { background: var(--amber); color: var(--bg); border: none; padding: 14px 28px; font-family: var(--mono); font-size: 13px; font-weight: 600; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: background 0.2s; }
+.search-btn:hover { background: #ffb820; }
+.search-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.status-line { text-align: center; margin-top: 16px; font-family: var(--mono); font-size: 12px; color: var(--text-dim); min-height: 18px; }
+.status-line.error { color: var(--red); }
+
+.attack-container { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; display: none; }
+.attack-container.active { display: block; }
+
+.wallet-summary { display: flex; align-items: center; gap: 20px; padding: 16px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 40px; flex-wrap: wrap; }
+.wallet-addr { font-family: var(--mono); font-size: 13px; color: var(--amber); }
+.wallet-meta { font-family: var(--mono); font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.wallet-score { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.wallet-score-label { font-family: var(--mono); font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.wallet-score-val { font-family: var(--mono); font-size: 22px; font-weight: 700; }
+.score-low { color: var(--green); }
+.score-mid { color: var(--amber); }
+.score-high { color: var(--red); }
+
+.chain { position: relative; padding-left: 48px; }
+.chain::before { content: ''; position: absolute; left: 18px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+.chain-progress { position: absolute; left: 18px; top: 0; width: 2px; height: 0; background: linear-gradient(180deg, var(--amber), var(--red)); transition: height 0.6s ease-out; z-index: 1; }
+
+.node { position: relative; opacity: 0; transform: translateX(-20px); }
+.node.revealed { opacity: 1; transform: translateX(0); transition: opacity 0.5s ease, transform 0.5s ease; }
+.node-dot { position: absolute; left: -48px; top: 0; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; z-index: 2; }
+.node-dot-inner { width: 14px; height: 14px; border-radius: 50%; background: var(--bg); border: 2px solid var(--text-muted); transition: all 0.4s ease; }
+.node.revealed .node-dot-inner { border-color: var(--amber); background: var(--amber); box-shadow: 0 0 12px var(--amber-glow); }
+.node.critical.revealed .node-dot-inner { border-color: var(--red); background: var(--red); box-shadow: 0 0 12px var(--red-glow); }
+
+.node-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 20px 24px; margin-bottom: 24px; position: relative; overflow: hidden; transition: border-color 0.3s, box-shadow 0.3s; }
+.node.revealed .node-card { border-color: rgba(240, 165, 0, 0.25); }
+.node.critical.revealed .node-card { border-color: rgba(255, 68, 68, 0.25); }
+.node-card:hover { background: var(--bg-card-hover); box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+.node-step { font-family: var(--mono); font-size: 11px; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+.node-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.node-icon { font-size: 18px; width: 24px; text-align: center; }
+.node-title { font-family: var(--mono); font-size: 15px; font-weight: 600; color: var(--text); }
+.node-action { font-size: 14px; color: var(--text-dim); line-height: 1.65; margin-bottom: 12px; }
+
+.node-evidence { background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 4px; padding: 12px 16px; margin-bottom: 12px; }
+.evidence-label { font-family: var(--mono); font-size: 10px; color: var(--amber); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+.evidence-items { display: flex; flex-direction: column; gap: 4px; }
+.evidence-item { font-family: var(--mono); font-size: 12px; color: var(--text); line-height: 1.5; display: flex; align-items: baseline; gap: 8px; }
+.evidence-item::before { content: '›'; color: var(--amber); flex-shrink: 0; }
+.ev-val { color: var(--amber); }
+.ev-danger { color: var(--red); }
+.ev-link { color: var(--amber); text-decoration: none; border-bottom: 1px dashed rgba(240,165,0,0.3); transition: border-color 0.2s; }
+.ev-link:hover { border-color: var(--amber); }
+
+.node-mitigation { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: var(--green-dim); border: 1px solid rgba(0, 204, 136, 0.2); border-radius: 4px; font-family: var(--mono); font-size: 11px; color: var(--green); letter-spacing: 0.5px; }
+
+.profile-card { background: linear-gradient(135deg, rgba(255,68,68,0.05), rgba(240,165,0,0.05)); border: 1px solid rgba(255, 68, 68, 0.25); }
+.profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.profile-field { background: rgba(0,0,0,0.3); border-radius: 4px; padding: 10px 14px; }
+.profile-field-label { font-family: var(--mono); font-size: 10px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.profile-field-value { font-family: var(--mono); font-size: 13px; color: var(--red); font-weight: 500; }
+.profile-field-value.unknown { color: var(--text-muted); font-style: italic; }
+
+.owl-observer { position: fixed; bottom: 24px; right: 24px; z-index: 100; display: none; flex-direction: column; align-items: center; gap: 8px; }
+.owl-observer.active { display: flex; }
+.owl-bubble { background: var(--bg-card); border: 1px solid var(--amber); border-radius: 8px 8px 8px 0; padding: 10px 14px; max-width: 220px; font-family: var(--mono); font-size: 11px; color: var(--amber); line-height: 1.5; box-shadow: 0 4px 20px rgba(0,0,0,0.4); opacity: 0; transform: translateY(8px); transition: opacity 0.3s, transform 0.3s; }
+.owl-bubble.show { opacity: 1; transform: translateY(0); }
+.owl-svg-wrap { width: 80px; height: 80px; }
+
+.cta-section { margin-top: 48px; padding: 32px; background: linear-gradient(135deg, rgba(240,165,0,0.08), rgba(255,68,68,0.08)); border: 1px solid var(--amber); border-radius: 8px; text-align: center; opacity: 0; transform: translateY(20px); transition: opacity 0.6s, transform 0.6s; }
+.cta-section.revealed { opacity: 1; transform: translateY(0); }
+.cta-title { font-family: var(--mono); font-size: 16px; font-weight: 700; color: var(--amber); margin-bottom: 8px; letter-spacing: 1px; }
+.cta-desc { font-size: 14px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; }
+.cta-btn { display: inline-block; background: var(--amber); color: var(--bg); font-family: var(--mono); font-size: 13px; font-weight: 600; padding: 12px 32px; border-radius: 4px; text-decoration: none; letter-spacing: 1px; text-transform: uppercase; transition: background 0.2s; }
+.cta-btn:hover { background: #ffb820; }
+
+.typing-indicator { display: none; align-items: center; gap: 4px; padding: 8px 0; margin-left: 48px; margin-bottom: 16px; }
+.typing-indicator.active { display: flex; }
+.typing-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); opacity: 0.3; animation: typePulse 1.2s ease-in-out infinite; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typePulse { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+
+@media (max-width: 640px) {
+  .header { padding: 16px 20px; }
+  .search-section { margin-top: 40px; }
+  .attack-container { padding: 24px 16px 60px; }
+  .chain { padding-left: 40px; }
+  .node-dot { left: -40px; }
+  .profile-grid { grid-template-columns: 1fr; }
+  .owl-observer { bottom: 12px; right: 12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">Cleo</div>
+    <div class="header-tag">Attack Path</div>
+  </div>
+  <a href="/" class="header-back">&larr; Back to Scanner</a>
+</div>
+
+<div class="search-section">
+  <div class="search-title">Threat Simulation</div>
+  <div class="search-subtitle">Enter a Solana wallet address to see exactly how a threat actor would exploit your on-chain footprint — step by step.</div>
+  <div class="search-bar">
+    <input type="text" class="search-input" id="addressInput" placeholder="Paste a Solana address..." spellcheck="false" autocomplete="off">
+    <button class="search-btn" id="scanBtn" onclick="runAttackPath()">Trace</button>
+  </div>
+  <div class="status-line" id="statusLine"></div>
+</div>
+
+<div class="attack-container" id="attackContainer">
+  <div class="wallet-summary" id="walletSummary"></div>
+  <div class="chain" id="chain"><div class="chain-progress" id="chainProgress"></div></div>
+  <div class="typing-indicator" id="typingIndicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+  <div class="cta-section" id="ctaSection">
+    <div class="cta-title">Break the Chain</div>
+    <div class="cta-desc" id="ctaDesc"></div>
+    <a href="/" class="cta-btn">Scan Another Wallet</a>
+  </div>
+</div>
+
+<div class="owl-observer" id="owlObserver">
+  <div class="owl-bubble" id="owlBubble"></div>
+  <div class="owl-svg-wrap">
+    <svg viewBox="0 0 200 200" width="80" height="80">
+      <ellipse cx="100" cy="130" rx="50" ry="45" fill="#2a2218" stroke="#f0a500" stroke-width="1.5"/>
+      <circle cx="100" cy="80" r="35" fill="#2a2218" stroke="#f0a500" stroke-width="1.5"/>
+      <path d="M72 52 L65 30 L80 48" fill="#2a2218" stroke="#f0a500" stroke-width="1.5"/>
+      <path d="M128 52 L135 30 L120 48" fill="#2a2218" stroke="#f0a500" stroke-width="1.5"/>
+      <circle cx="82" cy="78" r="14" fill="#1a1a10" stroke="#f0a500" stroke-width="1"/>
+      <circle cx="82" cy="78" r="10" fill="#f0a500" opacity="0.9"/>
+      <circle cx="82" cy="78" r="5" fill="#0a0a0f"/>
+      <circle cx="118" cy="78" r="14" fill="#1a1a10" stroke="#f0a500" stroke-width="1"/>
+      <circle cx="118" cy="78" r="10" fill="#f0a500" opacity="0.9"/>
+      <circle cx="118" cy="78" r="5" fill="#0a0a0f"/>
+      <circle cx="118" cy="78" r="16" fill="none" stroke="#f0a500" stroke-width="1.5" opacity="0.6"/>
+      <line x1="134" y1="78" x2="145" y2="110" stroke="#f0a500" stroke-width="1" opacity="0.4"/>
+      <path d="M95 88 L100 96 L105 88" fill="#d49200"/>
+      <circle cx="155" cy="130" r="12" fill="none" stroke="#f0a500" stroke-width="2" opacity="0.7"/>
+      <line x1="163" y1="138" x2="172" y2="150" stroke="#f0a500" stroke-width="2" opacity="0.7"/>
+      <path d="M80 172 L75 185 M85 174 L82 187 M90 175 L88 188" stroke="#f0a500" stroke-width="1.5" fill="none" opacity="0.5"/>
+      <path d="M110 175 L112 188 M115 174 L118 187 M120 172 L125 185" stroke="#f0a500" stroke-width="1.5" fill="none" opacity="0.5"/>
+    </svg>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   ATTACK PATH — maps directly to /api/score response from score.js
+
+   Response shape:
+   {
+     score, level, verdict, tagline,
+     privacy: { total, protocolUsage, timingEntropy, amountObfuscation,
+                addressReuse, fundingDiversity, protocolsUsed[], privacyExplain },
+     addressProfile: { walletAge, txnCount, solBalance, tokenCount,
+                       fundingSources[{address,amountSol,label,isPrivacy,sig}],
+                       topSendTo[{address,count,label,isPrivacy}],
+                       topReceiveFrom[{address,count,label,isPrivacy}],
+                       cexActivity[{name,txCount}], domain },
+     risks: [{ name, value, tier }],
+       // [0] Leaderboard Visibility  [1] Whale Flagging  [2] Social Linkage
+       // [3] Copy-Trade Risk  [4] Behavioural Pattern  [5] Exchange Linkage
+     findings: [{ type, badge, title, detail, txSignature?, isPumpFun? }]
+   }
+   ═══════════════════════════════════════════════════════════════════ */
+
+const OWL_QUIPS = {
+  entry:       "Starting with a single address... let's see what unravels.",
+  sns:         "A name. Now you're not just a wallet — you're a person.",
+  cex:         "Exchange deposits? That's a direct line to your real identity.",
+  whale:       "Large holdings attract attention — and targeted attacks.",
+  timing:      "Your schedule is showing. Every pattern is a fingerprint.",
+  dex:         "High swap frequency screams active trader. Copy-bots are watching.",
+  pump:        "Leaderboard fame comes at a cost. Everyone can see you.",
+  counterparty:"Your transaction partners reveal your entire network.",
+  funding:     "Follow the money backwards. Where did it all start?",
+  profile:     "And there it is. A full identity, built from breadcrumbs.",
+  clean:       "Clean wallet. Nothing for an attacker to latch onto... yet.",
+  privacy:     "Privacy tools detected — but only where you used them."
+};
+
+let nodes = [];
+let animating = false;
+
+// URL param: ?address=...
+(function() {
+  const a = new URLSearchParams(window.location.search).get('address');
+  if (a) { document.getElementById('addressInput').value = a; setTimeout(runAttackPath, 100); }
+})();
+document.getElementById('addressInput').addEventListener('keydown', e => { if (e.key === 'Enter') runAttackPath(); });
+
+// ─── Helpers ───
+function getRisk(risks, name) { return risks.find(r => r.name === name) || { value: 0, tier: 'low' }; }
+function shortAddr(a) { return a ? a.slice(0, 6) + '...' + a.slice(-4) : ''; }
+function solscanLink(sig) { return sig ? `<a class="ev-link" href="https://solscan.io/tx/${sig}" target="_blank" rel="noopener">${sig.slice(0,8)}...</a>` : ''; }
+function setStatus(msg, err) { const e = document.getElementById('statusLine'); e.textContent = msg; e.className = 'status-line' + (err ? ' error' : ''); }
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+function resetUI() {
+  document.getElementById('attackContainer').classList.remove('active');
+  document.getElementById('ctaSection').classList.remove('revealed');
+  document.getElementById('owlObserver').classList.remove('active');
+  document.getElementById('owlBubble').classList.remove('show');
+  nodes = [];
+}
+
+// ─── MAIN ───
+async function runAttackPath() {
+  const address = document.getElementById('addressInput').value.trim();
+  if (!address || animating) return;
+  if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) { setStatus('Invalid Solana address', true); return; }
+
+  animating = true;
+  document.getElementById('scanBtn').disabled = true;
+  setStatus('Fetching on-chain data...');
+  resetUI();
+
+  try {
+    const res = await fetch('/api/score?address=' + encodeURIComponent(address));
+    if (!res.ok) throw new Error('API returned ' + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    setStatus('Building attack path...');
+    const chain = buildKillChain(address, data);
+    renderWalletSummary(address, data);
+    document.getElementById('attackContainer').classList.add('active');
+    document.getElementById('owlObserver').classList.add('active');
+    renderNodes(chain);
+    setStatus('');
+    await revealSequence();
+  } catch (err) {
+    setStatus(err.message || 'Failed to fetch wallet data', true);
+  } finally {
+    animating = false;
+    document.getElementById('scanBtn').disabled = false;
+  }
+}
+
+// ─── BUILD KILL CHAIN ───
+function buildKillChain(address, data) {
+  const chain = [];
+  const risks = data.risks || [];
+  const ap = data.addressProfile || {};
+  const priv = data.privacy || {};
+  const findings = data.findings || [];
+
+  const findFinding = kw => findings.find(f => f.title && f.title.toLowerCase().includes(kw.toLowerCase()));
+
+  // ── 1: Entry Point (always) ──
+  chain.push({
+    id: 'entry', critical: false, owlQuip: 'entry',
+    step: 'Entry Point', icon: '🎯', title: 'Public Address Discovered',
+    action: 'An attacker starts with your wallet address. It could surface from a token holder list, a pump.fun leaderboard, a Solscan search, or an NFT marketplace. ' + (ap.txnCount || 0) + ' transactions are publicly visible on-chain — every one of them is evidence.',
+    evidence: [
+      { label: 'Address', value: shortAddr(address) },
+      { label: 'Transactions on record', value: String(ap.txnCount || 0) },
+      { label: 'Wallet age', value: ap.walletAge != null ? ap.walletAge + ' days' : 'Unknown' },
+      { label: 'SOL balance', value: (ap.solBalance || '0') + ' SOL' },
+    ],
+  });
+
+  // ── 2: SNS Domain ──
+  if (ap.domain) {
+    const r = getRisk(risks, 'Social Linkage');
+    chain.push({
+      id: 'sns', critical: true, owlQuip: 'sns',
+      step: 'Identity Anchor', icon: '🔗', title: ap.domain + '.sol Domain Resolved',
+      action: 'Your wallet resolves to a human-readable .sol domain. An attacker now searches "' + ap.domain + '" across Twitter, Discord, GitHub, and Telegram. Anonymous address becomes a named individual. This is often the single most damaging exposure vector.',
+      evidence: [
+        { label: 'Domain', value: ap.domain + '.sol', danger: true },
+        { label: 'Exposure score', value: r.value + '/100', danger: r.value >= 50 },
+        { label: 'Attack surface', value: 'Social media cross-referencing' },
+      ],
+      mitigation: 'Use a separate wallet for SNS domains. Never link your main trading wallet to a public identity.',
+    });
+  }
+
+  // ── 3: CEX / KYC ──
+  const cexAct = ap.cexActivity || [];
+  if (cexAct.length > 0) {
+    const r = getRisk(risks, 'Exchange Linkage');
+    const cexNames = cexAct.map(c => c.name + ' (' + c.txCount + ' txns)').join(', ');
+    const cexF = findFinding('CEX') || findFinding('Exchange');
+    chain.push({
+      id: 'cex', critical: true, owlQuip: 'cex',
+      step: 'KYC Bridge', icon: '🏦', title: 'Exchange Deposits Traced',
+      action: 'Transactions to centralized exchange deposit addresses were detected. Every CEX requires identity verification — there is now a verified link between this wallet and a real legal identity. An attacker with exchange-level access (insider, breach, or legal subpoena) can unmask the owner.',
+      evidence: [
+        { label: 'Exchanges', value: cexNames, danger: true },
+        { label: 'Exposure score', value: r.value + '/100', danger: r.value >= 50 },
+        { label: 'Risk', value: 'KYC-linked real identity', danger: true },
+        ...(cexF && cexF.txSignature ? [{ label: 'Evidence tx', value: solscanLink(cexF.txSignature), html: true }] : []),
+      ],
+      mitigation: 'Route funds through Vanish before depositing to exchanges to break the on-chain link.',
+    });
+  }
+
+  // ── 4: Whale ──
+  const whaleR = getRisk(risks, 'Whale Flagging');
+  if (whaleR.value > 20) {
+    const sol = parseFloat(ap.solBalance || '0');
+    chain.push({
+      id: 'whale', critical: whaleR.tier === 'crit' || whaleR.tier === 'high', owlQuip: 'whale',
+      step: 'Value Assessment', icon: '🐋', title: 'High-Value Target Identified',
+      action: 'Your wallet balance and token holdings flag you as a valuable target. Whale-tracking bots on Birdeye, Cielo, and Nansen are likely already monitoring this address. Large holdings make you a priority for phishing, social engineering, and SIM-swap attacks.',
+      evidence: [
+        { label: 'SOL balance', value: ap.solBalance + ' SOL', danger: sol >= 50 },
+        { label: 'Token holdings', value: (ap.tokenCount || 0) + ' tokens' },
+        { label: 'Whale score', value: whaleR.value + '/100', danger: whaleR.value >= 50 },
+        { label: 'Risk', value: 'Targeted attacks, phishing, SIM swaps', danger: true },
+      ],
+      mitigation: 'Split holdings across multiple wallets. Use Vanish to obscure total net worth.',
+    });
+  }
+
+  // ── 5: pump.fun ──
+  const pumpR = getRisk(risks, 'Leaderboard Visibility');
+  const pumpF = findFinding('Pump.fun');
+  if (pumpR.value > 10 && pumpF && pumpF.type !== 'ok') {
+    chain.push({
+      id: 'pump', critical: pumpR.tier === 'crit', owlQuip: 'pump',
+      step: 'Public Exposure', icon: '🏆', title: pumpF.title,
+      action: 'Activity on pump.fun makes this wallet publicly visible on high-traffic leaderboards. Thousands of users can see this address, its trades, and its P&L. This is the equivalent of painting a target on your back in the most-watched trading venue on Solana.',
+      evidence: [
+        { label: 'Signal', value: pumpF.detail },
+        { label: 'Visibility score', value: pumpR.value + '/100', danger: pumpR.value >= 50 },
+        ...(pumpF.txSignature ? [{ label: 'Evidence tx', value: solscanLink(pumpF.txSignature), html: true }] : []),
+      ],
+      mitigation: 'Use a dedicated burner wallet for pump.fun. Never connect it to your main holdings.',
+    });
+  }
+
+  // ── 6: Copy-Trade / DEX ──
+  const copyR = getRisk(risks, 'Copy-Trade Risk');
+  const copyF = findFinding('Copy-Trade') || findFinding('Trading Pattern') || findFinding('DEX');
+  if (copyR.value > 20 && copyF && copyF.type !== 'ok') {
+    chain.push({
+      id: 'dex', critical: copyR.tier === 'crit', owlQuip: 'dex',
+      step: 'Strategy Exposure', icon: '📊', title: 'Trading Strategy Visible',
+      action: 'High DEX swap frequency reveals you as an active on-chain trader. Your token buys and sells are fully transparent — copy-trade bots can mirror your moves in real time, front-run your exits, or use your patterns to predict future trades.',
+      evidence: [
+        { label: 'Signal', value: copyF.detail },
+        { label: 'Copy-trade score', value: copyR.value + '/100', danger: copyR.value >= 50 },
+        ...(copyF.txSignature ? [{ label: 'Evidence tx', value: solscanLink(copyF.txSignature), html: true }] : []),
+      ],
+      mitigation: 'Rotate trading wallets regularly. Use multiple wallets for different strategies.',
+    });
+  }
+
+  // ── 7: Behavioural / Timing ──
+  const behR = getRisk(risks, 'Behavioural Pattern');
+  const behF = findFinding('Clustered');
+  if (behR.value > 20) {
+    chain.push({
+      id: 'timing', critical: false, owlQuip: 'timing',
+      step: 'Pattern Analysis', icon: '⏰', title: 'Activity Schedule Mapped',
+      action: 'Transaction timestamps reveal your activity patterns. Clustering analysis shows when you\'re most active, suggesting your timezone and daily routine. Combined with other data points, this narrows down your geographic location and lifestyle.',
+      evidence: [
+        { label: 'Clustering score', value: behR.value + '/100' },
+        ...(behF ? [{ label: 'Pattern', value: behF.detail }] : []),
+        { label: 'Intelligence gained', value: 'Timezone, daily routine', danger: true },
+      ],
+      mitigation: 'Vary your transaction timing. Use delayed transactions or automated scheduling to break patterns.',
+    });
+  }
+
+  // ── 8: Counterparty Network ──
+  const topSend = ap.topSendTo || [];
+  const topRecv = ap.topReceiveFrom || [];
+  if (topSend.length >= 2 || topRecv.length >= 2) {
+    const allAddrs = [...new Set([...topSend, ...topRecv].map(c => c.address))];
+    chain.push({
+      id: 'counterparty', critical: allAddrs.length >= 4, owlQuip: 'counterparty',
+      step: 'Network Mapping', icon: '🕸️', title: allAddrs.length + ' Frequent Counterparties Identified',
+      action: 'By analyzing transaction flow, an attacker maps your on-chain social graph — who you transact with most, potential alt wallets, business partners, or friends. Each counterparty becomes a new attack vector for social engineering.',
+      evidence: [
+        ...topSend.slice(0, 3).map(c => ({
+          label: 'Sent to' + (c.label ? ' (' + c.label + ')' : ''),
+          value: shortAddr(c.address) + ' — ' + c.count + '× txns',
+          danger: !!c.label
+        })),
+        ...topRecv.slice(0, 2).map(c => ({
+          label: 'Received from' + (c.label ? ' (' + c.label + ')' : ''),
+          value: shortAddr(c.address) + ' — ' + c.count + '× txns',
+        })),
+      ],
+      mitigation: 'Use intermediary wallets for frequent transfers. Break direct links between your main wallet and regular contacts.',
+    });
+  }
+
+  // ── 9: Funding Source ──
+  const fundSrc = ap.fundingSources || [];
+  if (fundSrc.length > 0 && !fundSrc[0].isPrivacy) {
+    chain.push({
+      id: 'funding', critical: true, owlQuip: 'funding',
+      step: 'Origin Trace', icon: '🔍', title: 'Funding Source Identified',
+      action: 'An attacker traces where this wallet\'s funds originally came from. If the funding source is a known exchange or a previously doxed wallet, the identity chain extends backwards — potentially to the very first on-ramp.',
+      evidence: fundSrc.slice(0, 3).map(f => ({
+        label: f.label ? 'Source (' + f.label + ')' : 'Source wallet',
+        value: shortAddr(f.address) + ' — ' + f.amountSol + ' SOL',
+        danger: !!f.label,
+      })),
+      mitigation: 'Fund new wallets through Vanish to break the origin trail completely.',
+    });
+  }
+
+  // ── Privacy Defense ──
+  const protos = priv.protocolsUsed || [];
+  if (protos.length > 0 && protos[0] !== 'None detected') {
+    chain.push({
+      id: 'privacy', critical: false, owlQuip: 'privacy',
+      step: 'Defense Detected', icon: '🛡️', title: 'Privacy Tools In Use',
+      action: 'This wallet has interacted with on-chain privacy protocols. This breaks some links in the attack chain — but only for the transactions routed through these tools. Everything outside them remains fully exposed.',
+      evidence: protos.map(p => ({ label: 'Protocol', value: p })),
+    });
+  }
+
+  // ── Final: Dossier ──
+  chain.push({
+    id: 'profile', critical: true, owlQuip: 'profile',
+    step: 'Consolidated Profile', icon: '💀', title: "Attacker's Dossier Complete",
+    action: 'By chaining together publicly available on-chain data, an attacker has built a comprehensive profile of the wallet owner. Below is everything they now know — all from a single address.',
+    profileFields: buildDossier(address, data, chain),
+  });
+
+  return chain;
+}
+
+function buildDossier(address, data, chain) {
+  const ap = data.addressProfile || {};
+  const ids = new Set(chain.map(n => n.id));
+  const cex = (ap.cexActivity || []).map(c => c.name).join(', ');
+  const sol = parseFloat(ap.solBalance || 0);
+
+  return [
+    { label: 'Wallet', value: shortAddr(address), known: true },
+    { label: 'Identity Link', value: ap.domain ? ap.domain + '.sol' : 'Not found', known: !!ap.domain },
+    { label: 'KYC Exchange', value: cex || 'Not detected', known: cex.length > 0 },
+    { label: 'Net Worth Signal', value: sol > 10 ? ap.solBalance + ' SOL + ' + (ap.tokenCount || 0) + ' tokens' : 'Below threshold', known: sol > 10 },
+    { label: 'Activity Pattern', value: ids.has('timing') ? 'Clustered — timezone identifiable' : 'Insufficient data', known: ids.has('timing') },
+    { label: 'Trading Behavior', value: ids.has('dex') ? 'Active DEX trader — copy-targetable' : 'Low activity', known: ids.has('dex') },
+    { label: 'Social Graph', value: ids.has('counterparty') ? 'Frequent counterparties mapped' : 'No clear pattern', known: ids.has('counterparty') },
+    { label: 'Exposure Score', value: data.score + '/100 — ' + data.verdict, known: true },
+  ];
+}
+
+// ─── RENDER ───
+function renderWalletSummary(address, data) {
+  const s = data.score || 0;
+  const cls = s < 25 ? 'score-low' : s < 50 ? 'score-mid' : 'score-high';
+  const ap = data.addressProfile || {};
+  document.getElementById('walletSummary').innerHTML =
+    '<div><div class="wallet-addr">' + shortAddr(address) + '</div>' +
+    '<div class="wallet-meta">' + (ap.txnCount||0) + ' txns · ' + (ap.walletAge!=null?ap.walletAge:'?') + ' days old · ' + (ap.solBalance||'0') + ' SOL</div></div>' +
+    '<div class="wallet-score"><span class="wallet-score-label">Lens Score</span><span class="wallet-score-val ' + cls + '">' + s + '</span></div>';
+}
+
+function renderNodes(chain) {
+  const c = document.getElementById('chain');
+  c.innerHTML = '<div class="chain-progress" id="chainProgress"></div>';
+  nodes = [];
+
+  chain.forEach((node, i) => {
+    const el = document.createElement('div');
+    el.className = 'node' + (node.critical ? ' critical' : '');
+
+    let h = '<div class="node-dot"><div class="node-dot-inner"></div></div>';
+    h += '<div class="node-card' + (node.id === 'profile' ? ' profile-card' : '') + '">';
+    h += '<div class="node-step">Step ' + String(i+1).padStart(2,'0') + ' — ' + node.step + '</div>';
+    h += '<div class="node-header"><span class="node-icon">' + node.icon + '</span><span class="node-title">' + node.title + '</span></div>';
+    h += '<div class="node-action">' + node.action + '</div>';
+
+    if (node.evidence) {
+      h += '<div class="node-evidence"><div class="evidence-label">Evidence Found</div><div class="evidence-items">';
+      node.evidence.forEach(e => {
+        const vc = e.danger ? 'ev-danger' : 'ev-val';
+        h += '<div class="evidence-item"><span>' + e.label + ':</span> <span class="' + vc + '">' + e.value + '</span></div>';
+      });
+      h += '</div></div>';
+    }
+
+    if (node.profileFields) {
+      h += '<div class="profile-grid">';
+      node.profileFields.forEach(f => {
+        h += '<div class="profile-field"><div class="profile-field-label">' + f.label + '</div><div class="profile-field-value' + (f.known?'':' unknown') + '">' + f.value + '</div></div>';
+      });
+      h += '</div>';
+    }
+
+    if (node.mitigation) {
+      h += '<div class="node-mitigation"><span>🛡️</span> ' + node.mitigation + '</div>';
+    }
+
+    h += '</div>';
+    el.innerHTML = h;
+    c.appendChild(el);
+    nodes.push({ el, node });
+  });
+}
+
+// ─── ANIMATE ───
+async function revealSequence() {
+  const prog = document.getElementById('chainProgress');
+  const typing = document.getElementById('typingIndicator');
+  const total = nodes.length;
+
+  for (let i = 0; i < total; i++) {
+    const { el, node } = nodes[i];
+    if (i > 0) {
+      el.parentNode.insertBefore(typing, el);
+      typing.classList.add('active');
+      await delay(1000 + Math.random() * 800);
+      typing.classList.remove('active');
+    }
+    el.classList.add('revealed');
+    prog.style.height = ((i + 1) / total * 100) + '%';
+    if (node.owlQuip && OWL_QUIPS[node.owlQuip]) showOwlBubble(OWL_QUIPS[node.owlQuip]);
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (i < total - 1) await delay(600);
+  }
+
+  await delay(600);
+  const crits = nodes.filter(n => n.node.critical).length;
+  document.getElementById('ctaDesc').textContent = crits + ' critical exposure point' + (crits !== 1 ? 's were' : ' was') + ' found in this wallet\'s attack path. Each one is a link an attacker can exploit. Break the chain before someone else follows it.';
+  document.getElementById('ctaSection').classList.add('revealed');
+  document.getElementById('ctaSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+let owlTimeout;
+function showOwlBubble(text) {
+  const b = document.getElementById('owlBubble');
+  b.textContent = text;
+  b.classList.add('show');
+  clearTimeout(owlTimeout);
+  owlTimeout = setTimeout(() => b.classList.remove('show'), 4000);
+}
+</script>
+</body>
+</html>
