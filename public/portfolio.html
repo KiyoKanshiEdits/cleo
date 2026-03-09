@@ -37,7 +37,7 @@ header { padding:28px 0 24px; border-bottom:2px solid var(--text); display:flex;
 .clear-btn:hover { opacity:1; }
 
 .wallet-list { display:grid; gap:2px; }
-.wallet-row { display:grid; grid-template-columns:auto 1fr auto auto auto; align-items:center; gap:16px; padding:16px 20px; background:var(--cream); border:1px solid transparent; transition:border-color 0.15s; }
+.wallet-row { display:grid; grid-template-columns:auto 1fr auto auto auto auto auto; align-items:center; gap:16px; padding:16px 20px; background:var(--cream); border:1px solid transparent; transition:border-color 0.15s; }
 .wallet-row:hover { border-color:var(--border); }
 .wallet-rank { font-family:'Space Mono',monospace; font-size:10px; color:var(--text-dim); min-width:20px; }
 .wallet-info { min-width:0; }
@@ -61,10 +61,15 @@ header { padding:28px 0 24px; border-bottom:2px solid var(--text); display:flex;
 .empty-sub { font-family:'Space Mono',monospace; font-size:10px; color:var(--text-dim); line-height:1.7; margin-bottom:20px; }
 .empty-cta { display:inline-block; background:var(--accent); color:white; padding:10px 24px; font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.15em; text-transform:uppercase; text-decoration:none; }
 
+.delta-badge { font-family:'Space Mono',monospace; font-size:9px; padding:2px 6px; font-weight:700; }
+.delta-badge.worse { background:rgba(200,64,32,0.12); color:#c84020; }
+.delta-badge.better { background:rgba(26,138,64,0.12); color:#1a8a40; }
+.delta-badge.same { background:rgba(0,0,0,0.05); color:#999; }
+.rescan-status { font-family:'Space Mono',monospace; font-size:8px; color:var(--accent); opacity:0.7; min-width:72px; text-align:center; }
 @media (max-width:600px) {
   .aggregate-banner { grid-template-columns:1fr; }
   .wallet-row { grid-template-columns:1fr auto auto; }
-  .wallet-rank, .wallet-date { display:none; }
+  .wallet-rank, .wallet-date, .rescan-status { display:none; }
 }
 </style>
 </head>
@@ -139,14 +144,12 @@ function load() {
   empty.style.display = 'none';
   banner.style.display = 'grid';
 
-  // Aggregate score
   const avg = Math.round(data.reduce((s, w) => s + (w.score || 0), 0) / data.length);
   document.getElementById('agg-score').textContent = avg;
   const v = avg >= 75 ? 'CRITICAL EXPOSURE' : avg >= 50 ? 'HIGH EXPOSURE' : avg >= 25 ? 'MODERATE EXPOSURE' : 'LOW EXPOSURE';
   document.getElementById('agg-verdict').textContent = v;
   document.getElementById('agg-sub').textContent = `${data.length} wallet${data.length > 1 ? 's' : ''} tracked · average Lens Score across portfolio`;
 
-  // Sort by score descending
   const sorted = [...data].sort((a, b) => (b.score || 0) - (a.score || 0));
 
   list.innerHTML = sorted.map((w, i) => {
@@ -154,18 +157,60 @@ function load() {
     const score = w.score || 0;
     const cls = score >= 75 ? 'score-crit' : score >= 50 ? 'score-high' : score >= 25 ? 'score-med' : 'score-low';
     const date = w.savedAt ? new Date(w.savedAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short' }) : '—';
-    return `<div class="wallet-row">
+    const key = w.address.slice(0, 8);
+    let deltaBadge = '';
+    if (w.prevScore !== undefined && w.prevScore !== null) {
+      const diff = score - w.prevScore;
+      if (diff > 0) deltaBadge = `<span class="delta-badge worse">↑${diff}</span>`;
+      else if (diff < 0) deltaBadge = `<span class="delta-badge better">↓${Math.abs(diff)}</span>`;
+      else deltaBadge = `<span class="delta-badge same">—</span>`;
+    }
+    return `<div class="wallet-row" id="row-${key}">
       <div class="wallet-rank">${String(i+1).padStart(2,'0')}</div>
       <div class="wallet-info">
         <div class="wallet-address">${short}</div>
-        <div class="wallet-finding">${w.topFinding || '—'}</div>
+        <div class="wallet-finding" id="finding-${key}">${w.topFinding || '—'}</div>
       </div>
       <div class="wallet-date">${date}</div>
-      <div class="wallet-score-badge ${cls}">${score}</div>
+      <div class="rescan-status" id="status-${key}"></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div class="wallet-score-badge ${cls}" id="score-${key}">${score}</div>
+        ${deltaBadge}
+      </div>
       <button class="rescan-btn" onclick="rescan('${w.address}')">Re-scan →</button>
       <button class="remove-btn" onclick="remove('${w.address}')" title="Remove">×</button>
     </div>`;
   }).join('');
+}
+
+async function autoRescan() {
+  const data = JSON.parse(localStorage.getItem('cleoPortfolio') || '[]');
+  if (data.length === 0) return;
+
+  data.forEach(w => {
+    const el = document.getElementById('status-' + w.address.slice(0, 8));
+    if (el) el.textContent = 'rescanning...';
+  });
+
+  const updated = await Promise.all(data.map(async w => {
+    try {
+      const res = await fetch('/api/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress: w.address }),
+      });
+      if (!res.ok) throw new Error('failed');
+      const d = await res.json();
+      return { ...w, prevScore: w.score, score: d.score, verdict: d.verdict, topFinding: d.findings?.[0]?.title || '—', savedAt: new Date().toISOString() };
+    } catch {
+      const el = document.getElementById('status-' + w.address.slice(0, 8));
+      if (el) el.textContent = 'error';
+      return w;
+    }
+  }));
+
+  localStorage.setItem('cleoPortfolio', JSON.stringify(updated));
+  load();
 }
 
 function remove(address) {
@@ -186,6 +231,7 @@ function rescan(address) {
 }
 
 load();
+autoRescan();
 </script>
 </body>
 </html>

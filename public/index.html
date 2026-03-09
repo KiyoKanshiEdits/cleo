@@ -57,6 +57,8 @@ header { padding:28px 0 24px; border-bottom:2px solid var(--text); display:flex;
 .search-btn { background:var(--accent); border:none; padding:12px 28px; font-family:'Syne',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:white; cursor:pointer; transition:background 0.15s; flex-shrink:0; }
 .search-btn:hover { background:var(--accent-hover); }
 .search-btn:disabled { opacity:0.6; cursor:not-allowed; }
+.search-btn.scanning { animation:btn-pulse 0.7s ease infinite alternate; }
+@keyframes btn-pulse { from { box-shadow:0 0 0px var(--accent); } to { box-shadow:0 0 20px var(--accent); transform:scale(1.02); } }
 .search-hint { font-family:'Space Mono',monospace; font-size:9px; color:var(--text-dim); margin-top:8px; }
 .error-msg { font-family:'Space Mono',monospace; font-size:11px; color:var(--red); margin-top:10px; display:none; }
 .error-msg.visible { display:block; }
@@ -271,14 +273,14 @@ header { padding:28px 0 24px; border-bottom:2px solid var(--text); display:flex;
           <textarea id="wallet-input" class="scan-textarea" placeholder="Address 1&#10;Address 2&#10;Address 3&#10;Address 4&#10;Address 5" rows="4"></textarea>
           <div class="scan-footer">
             <span class="scan-hint-inner">// Read-only. No signatures. No tracking.</span>
-            <button class="search-btn" id="examine-btn" onclick="examine()">EXAMINE →</button>
+            <button class="search-btn" id="examine-btn" onclick="examine()">SCAN →</button>
           </div>
         </div>
         <div class="error-msg" id="error-msg"></div>
       </div>
       <!-- RAILGUN-inspired trust stats bar -->
       <div class="stats-bar">
-        <div class="stats-item"><div class="stats-num">100</div><div class="stats-lbl">Txns Scanned</div></div>
+        <div class="stats-item"><div class="stats-num" id="stat-txns">100</div><div class="stats-lbl">Txns Scanned</div></div>
         <div class="stats-item"><div class="stats-num">6</div><div class="stats-lbl">Risk Dimensions</div></div>
         <div class="stats-item"><div class="stats-num">5</div><div class="stats-lbl">Privacy Metrics</div></div>
         <div class="stats-item"><div class="stats-num">0</div><div class="stats-lbl">Signatures Required</div></div>
@@ -389,6 +391,7 @@ async function examine() {
   hideError();
   examineBtn.disabled = true;
   examineBtn.textContent = addresses.length > 1 ? `SCANNING ${addresses.length} WALLETS...` : 'SCANNING...';
+  examineBtn.classList.add('scanning');
 
   try {
     const results = await Promise.all(addresses.map(async addr => {
@@ -407,7 +410,8 @@ async function examine() {
     showError(err.message);
   } finally {
     examineBtn.disabled = false;
-    examineBtn.textContent = 'EXAMINE →';
+    examineBtn.textContent = 'SCAN →';
+    examineBtn.classList.remove('scanning');
   }
 }
 
@@ -604,6 +608,9 @@ function renderProfilePanel(ap, mapId) {
 
 // ── MAIN RENDER ───────────────────────────────────────────────────────────────
 function renderResults(results) {
+  // Update stats bar
+  const totalTxns = results.reduce((sum, r) => sum + (r.addressProfile?.txnCount || 100), 0);
+  document.getElementById('stat-txns').textContent = totalTxns;
   const container = document.getElementById('wallet-cards');
   container.innerHTML = results.map((d, i) => {
     const short = d.address.slice(0,6) + '...' + d.address.slice(-6);
