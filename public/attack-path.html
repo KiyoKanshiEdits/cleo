@@ -42,10 +42,17 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;background:rep
 .status-line{text-align:center;margin-top:16px;font-family:var(--mono);font-size:12px;color:var(--text-dim);min-height:18px}
 .status-line.error{color:var(--red)}
 
+/* Breadcrumb trail */
+.breadcrumb{display:flex;align-items:center;gap:6px;padding:10px 0;flex-wrap:wrap;margin-bottom:12px;min-height:32px}
+.bc-item{font-family:var(--mono);font-size:10px;color:var(--text-dim);cursor:pointer;padding:3px 8px;border:1px solid var(--border);border-radius:3px;transition:color 0.2s,border-color 0.2s;text-decoration:none}
+.bc-item:hover{color:var(--amber);border-color:var(--amber)}
+.bc-item.active{color:var(--amber);border-color:var(--amber)}
+.bc-sep{color:var(--text-muted);font-family:var(--mono);font-size:10px}
+
 .main-container{display:none;max-width:1200px;margin:0 auto;padding:20px 24px 60px}
 .main-container.active{display:block}
 
-.wallet-summary{display:flex;align-items:center;gap:20px;padding:16px 20px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;margin-bottom:24px;flex-wrap:wrap}
+.wallet-summary{display:flex;align-items:center;gap:20px;padding:16px 20px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;margin-bottom:8px;flex-wrap:wrap}
 .wallet-addr{font-family:var(--mono);font-size:13px;color:var(--amber)}
 .wallet-meta{font-family:var(--mono);font-size:11px;color:var(--text-muted);margin-top:2px}
 .wallet-score{margin-left:auto;display:flex;align-items:center;gap:8px}
@@ -53,11 +60,9 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;background:rep
 .wallet-score-val{font-family:var(--mono);font-size:22px;font-weight:700}
 .score-low{color:var(--green)}.score-mid{color:var(--amber)}.score-high{color:var(--red)}
 
-/* LAYOUT: graph left, dossier right */
 .content-split{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start}
 @media(max-width:900px){.content-split{grid-template-columns:1fr}}
 
-/* GRAPH */
 .graph-wrap{position:relative;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;overflow:hidden}
 .graph-svg{width:100%;display:block}
 .node-tooltip{position:absolute;background:var(--bg-card);border:1px solid var(--amber);border-radius:4px;padding:10px 14px;font-family:var(--mono);font-size:11px;color:var(--text);pointer-events:none;opacity:0;transition:opacity 0.2s;z-index:50;max-width:280px;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
@@ -71,12 +76,13 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;background:rep
 .legend-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--text-dim)}
 .legend-dot{width:8px;height:8px;border-radius:50%}
 
-/* DOSSIER PANEL */
+/* Interaction hint */
+.graph-hint{font-family:var(--mono);font-size:9px;color:var(--text-muted);text-align:center;padding:8px;border-top:1px solid var(--border)}
+
 .dossier{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:20px;position:sticky;top:24px}
 .dossier-title{font-family:var(--mono);font-size:11px;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
 .dossier-title::before{content:'';width:8px;height:8px;background:var(--red);border-radius:50%;animation:pulse-dot 1.5s ease infinite}
 @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:0.3}}
-
 .dossier-empty{font-family:var(--mono);font-size:11px;color:var(--text-muted);text-align:center;padding:20px 0}
 
 .d-entry{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);opacity:0;transform:translateX(10px);transition:opacity 0.4s,transform 0.4s}
@@ -92,9 +98,11 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;background:rep
 .d-entry-detail{font-family:var(--mono);font-size:10px;color:var(--text-dim);line-height:1.5}
 .d-entry-link{color:var(--amber);text-decoration:none;font-family:var(--mono);font-size:9px;border-bottom:1px dashed rgba(240,165,0,0.3)}
 .d-entry-link:hover{border-color:var(--amber)}
+.d-entry-actions{display:flex;gap:10px;margin-top:6px;align-items:center}
+.d-action-trace{font-family:var(--mono);font-size:9px;color:var(--amber);cursor:pointer;padding:2px 8px;border:1px solid var(--amber);border-radius:3px;background:transparent;transition:background 0.2s}
+.d-action-trace:hover{background:var(--amber-dim)}
 .d-mitigation{font-family:var(--mono);font-size:9px;color:var(--green);margin-top:4px;display:flex;align-items:center;gap:4px}
 
-/* CTA */
 .cta-section{margin-top:32px;padding:28px;background:linear-gradient(135deg,rgba(240,165,0,0.08),rgba(255,68,68,0.08));border:1px solid var(--amber);border-radius:8px;text-align:center;opacity:0;transform:translateY(20px);transition:opacity 0.6s,transform 0.6s}
 .cta-section.revealed{opacity:1;transform:translateY(0)}
 .cta-title{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--amber);margin-bottom:6px}
@@ -102,7 +110,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;background:rep
 .cta-btn{display:inline-block;background:var(--amber);color:var(--bg);font-family:var(--mono);font-size:12px;font-weight:600;padding:10px 28px;border-radius:4px;text-decoration:none;letter-spacing:1px;text-transform:uppercase;transition:background 0.2s}
 .cta-btn:hover{background:#ffb820}
 
-/* OWL */
 .owl-observer{position:fixed;bottom:24px;right:24px;z-index:100;display:none;flex-direction:column;align-items:center;gap:8px}
 .owl-observer.active{display:flex}
 .owl-bubble{background:var(--bg-card);border:1px solid var(--amber);border-radius:8px 8px 8px 0;padding:10px 14px;max-width:200px;font-family:var(--mono);font-size:10px;color:var(--amber);line-height:1.5;box-shadow:0 4px 20px rgba(0,0,0,0.4);opacity:0;transform:translateY(8px);transition:opacity 0.3s,transform 0.3s}
@@ -134,19 +141,21 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;background:rep
   <div class="search-subtitle">Enter a Solana wallet address to visualize how a threat actor maps your on-chain identity — node by node.</div>
   <div class="search-bar">
     <input type="text" class="search-input" id="addressInput" placeholder="Paste a Solana address..." spellcheck="false" autocomplete="off">
-    <button class="search-btn" id="scanBtn" onclick="runTrace()">Trace</button>
+    <button class="search-btn" id="scanBtn" onclick="traceAddress()">Trace</button>
   </div>
   <div class="status-line" id="statusLine"></div>
 </div>
 
 <div class="main-container" id="mainContainer">
   <div class="wallet-summary" id="walletSummary"></div>
+  <div class="breadcrumb" id="breadcrumb"></div>
 
   <div class="content-split">
     <div>
       <div class="graph-wrap" id="graphWrap">
         <svg class="graph-svg" id="graphSvg" viewBox="0 0 700 700" xmlns="http://www.w3.org/2000/svg"></svg>
         <div class="node-tooltip" id="tooltip"></div>
+        <div class="graph-hint">Click a node to trace that address · Right-click for Solscan</div>
         <div class="graph-legend" id="graphLegend"></div>
       </div>
     </div>
@@ -188,37 +197,30 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;background:rep
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════════
-   ATTACK PATH v2 — Concentric ring graph with directional edges,
-   grouped zones, severity-weighted lines, single updating dossier.
+/* ═══════════════════════════════════════════════════════════════
+   ATTACK PATH v3
+   - Click any node to re-center and trace that address
+   - Right-click any node for Solscan
+   - Inward arrows: outer node forms first, line grows toward center
+   - Outward arrows: line grows from center, node forms at end
+   - Breadcrumb trail tracks investigation path
+   ═══════════════════════════════════════════════════════════════ */
 
-   API: POST /api/score { walletAddress }
-   Response: { score, level, verdict, tagline, privacy, addressProfile, risks[], findings[] }
-   ═══════════════════════════════════════════════════════════════════ */
-
-const ZONE = { ORIGIN:'origin', KYC:'kyc', EXPOSURE:'exposure', PATTERN:'pattern', SOCIAL:'social', DEFENSE:'defense' };
-
-// Zone angles (radians) — groups sit in defined sectors of the circle
-// Think of a clock: origin=top-left, kyc=top-right, exposure=right, pattern=bottom-right, social=bottom-left, defense=left
-const ZONE_ANGLES = {
-  [ZONE.ORIGIN]:   { start: -2.8, end: -2.0 },   // ~10 o'clock
-  [ZONE.KYC]:      { start: -1.2, end: -0.4 },    // ~1 o'clock
-  [ZONE.EXPOSURE]: { start: -0.3, end:  0.5 },     // ~3 o'clock
-  [ZONE.PATTERN]:  { start:  0.6, end:  1.4 },     // ~5 o'clock
-  [ZONE.SOCIAL]:   { start:  1.5, end:  2.5 },     // ~7 o'clock
-  [ZONE.DEFENSE]:  { start:  2.6, end:  3.2 },     // ~9 o'clock
+const ZONE={ORIGIN:'origin',KYC:'kyc',EXPOSURE:'exposure',PATTERN:'pattern',SOCIAL:'social',DEFENSE:'defense'};
+const ZONE_ANGLES={
+  [ZONE.ORIGIN]:{start:-2.8,end:-2.0},
+  [ZONE.KYC]:{start:-1.2,end:-0.4},
+  [ZONE.EXPOSURE]:{start:-0.3,end:0.5},
+  [ZONE.PATTERN]:{start:0.6,end:1.4},
+  [ZONE.SOCIAL]:{start:1.5,end:2.5},
+  [ZONE.DEFENSE]:{start:2.6,end:3.2},
 };
+const COLORS={center:'#f0a500',origin:'#44aaff',kyc:'#ff4444',exposure:'#ff8844',pattern:'#9966ff',social:'#00cc88',defense:'#00cc88'};
+const NODE_R={inner:22,outer:18};
+const CENTER_R=32;
+const RING_R={inner:170,outer:270};
 
-const COLORS = {
-  center:'#f0a500', origin:'#44aaff', kyc:'#ff4444', exposure:'#ff8844',
-  pattern:'#9966ff', social:'#00cc88', defense:'#00cc88'
-};
-
-const NODE_R = { inner: 22, outer: 18 };
-const CENTER_R = 32;
-const RING_R = { inner: 170, outer: 270 };
-
-const OWL_QUIPS = [
+const OWL_QUIPS=[
   "Tracing the address... let's see what surfaces.",
   "Following the money trail.",
   "Identity fragments forming.",
@@ -227,29 +229,42 @@ const OWL_QUIPS = [
   "Dossier complete. All from one address."
 ];
 
-let animating = false;
+let animating=false;
+let traceHistory=[];  // breadcrumb trail
+let currentAbort=null; // to cancel animation on re-trace
 
-(function(){const a=new URLSearchParams(location.search).get('address');if(a){document.getElementById('addressInput').value=a;setTimeout(runTrace,100)}})();
-document.getElementById('addressInput').addEventListener('keydown',e=>{if(e.key==='Enter')runTrace()});
+(function(){const a=new URLSearchParams(location.search).get('address');if(a){document.getElementById('addressInput').value=a;setTimeout(traceAddress,100)}})();
+document.getElementById('addressInput').addEventListener('keydown',e=>{if(e.key==='Enter')traceAddress()});
 
-// ─── MAIN ───
-async function runTrace(){
-  const address=document.getElementById('addressInput').value.trim();
+// ─── PUBLIC: trace an address (can be called from node clicks) ───
+async function traceAddress(address){
+  if(!address)address=document.getElementById('addressInput').value.trim();
   if(!address||animating)return;
   if(!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)){setStatus('Invalid Solana address',true);return}
+
+  // Cancel any in-progress animation
+  if(currentAbort)currentAbort.cancel=true;
+  const abort={cancel:false};
+  currentAbort=abort;
 
   animating=true;
   document.getElementById('scanBtn').disabled=true;
   setStatus('Fetching on-chain data...');
-  resetUI();
+  clearGraph();
 
   try{
     const res=await fetch('/api/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({walletAddress:address})});
     if(!res.ok)throw new Error('API returned '+res.status);
     const data=await res.json();
     if(data.error)throw new Error(data.error);
+    if(abort.cancel)return;
+
+    // Update breadcrumb
+    if(!traceHistory.includes(address))traceHistory.push(address);
+    renderBreadcrumb();
 
     setStatus('Building threat graph...');
+    document.getElementById('addressInput').value=address;
     const nodes=buildNodes(address,data);
     renderSummary(address,data);
     renderLegend(nodes);
@@ -257,13 +272,24 @@ async function runTrace(){
     document.getElementById('owlObserver').classList.add('active');
     document.getElementById('dossierEmpty').textContent='Scanning...';
     setStatus('');
-    await animateAll(address,nodes,data);
+    await animateAll(address,nodes,data,abort);
   }catch(err){
-    setStatus(err.message||'Failed to fetch',true);
+    if(!abort.cancel)setStatus(err.message||'Failed to fetch',true);
   }finally{
     animating=false;
     document.getElementById('scanBtn').disabled=false;
+    currentAbort=null;
   }
+}
+
+// ─── BREADCRUMB ───
+function renderBreadcrumb(){
+  const el=document.getElementById('breadcrumb');
+  el.innerHTML=traceHistory.map((addr,i)=>{
+    const isLast=i===traceHistory.length-1;
+    const sep=i<traceHistory.length-1?'<span class="bc-sep">→</span>':'';
+    return `<span class="bc-item${isLast?' active':''}" onclick="traceAddress('${addr}')">${shortAddr(addr)}</span>${sep}`;
+  }).join('');
 }
 
 // ─── BUILD NODES ───
@@ -276,202 +302,153 @@ function buildNodes(address,data){
   const gR=name=>(risks.find(r=>r.name===name)||{value:0,tier:'low'});
   const fF=kw=>findings.find(f=>f.title&&f.title.toLowerCase().includes(kw.toLowerCase()));
 
-  // ── INNER RING: Direct on-chain evidence ──
+  // INNER RING — direct on-chain evidence
 
-  // Funding sources (ORIGIN zone, arrows point INWARD to center)
+  // Funding sources (arrows INWARD — node forms first, line grows toward center)
   (ap.fundingSources||[]).slice(0,2).forEach((f,i)=>{
     if(f.isPrivacy)return;
     nodes.push({
-      zone:ZONE.ORIGIN, ring:'inner', color:COLORS.origin, arrowDir:'inward',
-      severity:f.label?3:2,
-      id:'fund-'+i, icon:'💰',
-      label:f.label||shortAddr(f.address), sublabel:'Funded '+f.amountSol+' SOL',
-      link:'https://solscan.io/account/'+f.address, fullAddr:f.address,
-      dossier:{ icon:'💰', label:'Funding Source', value:f.label?f.label+' — '+f.amountSol+' SOL':shortAddr(f.address)+' — '+f.amountSol+' SOL',
-        level:f.label?'critical':'warning', detail:'Origin of funds'+(f.label?' via '+f.label:'')+'.',
-        mitigation:'Fund new wallets through Vanish.', link:'https://solscan.io/account/'+f.address }
+      zone:ZONE.ORIGIN,ring:'inner',color:COLORS.origin,arrowDir:'inward',severity:f.label?3:2,
+      id:'fund-'+i,icon:'💰',label:f.label||shortAddr(f.address),sublabel:'Funded '+f.amountSol+' SOL',
+      traceAddr:f.address,solscanUrl:'https://solscan.io/account/'+f.address,fullAddr:f.address,
+      dossier:{icon:'💰',label:'Funding Source',value:f.label?f.label+' — '+f.amountSol+' SOL':shortAddr(f.address)+' — '+f.amountSol+' SOL',
+        level:f.label?'critical':'warning',detail:'Origin of funds'+(f.label?' via '+f.label:'')+'.',
+        mitigation:'Fund new wallets through Vanish.',link:'https://solscan.io/account/'+f.address,traceAddr:f.address}
     });
   });
 
-  // CEX (KYC zone, arrows point OUTWARD from center)
+  // CEX (arrows OUTWARD)
   const cexAct=ap.cexActivity||[];
   if(cexAct.length>0){
     const cexF=fF('CEX')||fF('Exchange');
     nodes.push({
-      zone:ZONE.KYC, ring:'inner', color:COLORS.kyc, arrowDir:'outward',
-      severity:3,
-      id:'cex', icon:'🏦',
-      label:cexAct.map(c=>c.name).join(', '), sublabel:cexAct.reduce((s,c)=>s+c.txCount,0)+'x deposits',
-      link:cexF&&cexF.txSignature?'https://solscan.io/tx/'+cexF.txSignature:'https://solscan.io/account/'+address,
-      dossier:{ icon:'🏦', label:'KYC Bridge', value:cexAct.map(c=>c.name+' ('+c.txCount+'x)').join(', '),
-        level:'critical', detail:'Deposits to KYC exchanges create a verified identity link.',
-        mitigation:'Route through Vanish before depositing.', link:cexF&&cexF.txSignature?'https://solscan.io/tx/'+cexF.txSignature:null }
+      zone:ZONE.KYC,ring:'inner',color:COLORS.kyc,arrowDir:'outward',severity:3,
+      id:'cex',icon:'🏦',label:cexAct.map(c=>c.name).join(', '),sublabel:cexAct.reduce((s,c)=>s+c.txCount,0)+'x deposits',
+      solscanUrl:cexF&&cexF.txSignature?'https://solscan.io/tx/'+cexF.txSignature:'https://solscan.io/account/'+address,
+      dossier:{icon:'🏦',label:'KYC Bridge',value:cexAct.map(c=>c.name+' ('+c.txCount+'x)').join(', '),
+        level:'critical',detail:'Deposits to KYC exchanges create a verified identity link.',
+        mitigation:'Route through Vanish before depositing.',link:cexF&&cexF.txSignature?'https://solscan.io/tx/'+cexF.txSignature:null}
     });
   }
 
-  // Counterparties (SOCIAL zone, bidirectional)
+  // Counterparties (arrows based on direction)
   const cpSeen=new Set();
   [...(ap.topSendTo||[]).slice(0,2),...(ap.topReceiveFrom||[]).slice(0,2)].forEach((c,i)=>{
     if(cpSeen.has(c.address))return;
     cpSeen.add(c.address);
     const isSend=(ap.topSendTo||[]).find(s=>s.address===c.address);
     nodes.push({
-      zone:ZONE.SOCIAL, ring:'inner', color:COLORS.social, arrowDir:isSend?'outward':'inward',
-      severity:c.label?3:1,
-      id:'cp-'+i, icon:'🔄',
-      label:c.label||shortAddr(c.address), sublabel:(isSend?'Sent':'Recv')+' · '+c.count+'x',
-      link:'https://solscan.io/account/'+c.address, fullAddr:c.address,
-      dossier:{ icon:'🔄', label:'Counterparty', value:(c.label||shortAddr(c.address))+' — '+c.count+'x txns',
-        level:c.label?'critical':'warning', detail:(isSend?'Outbound':'Inbound')+' transactions map social graph.',
-        link:'https://solscan.io/account/'+c.address }
+      zone:ZONE.SOCIAL,ring:'inner',color:COLORS.social,arrowDir:isSend?'outward':'inward',severity:c.label?3:1,
+      id:'cp-'+i,icon:'🔄',label:c.label||shortAddr(c.address),sublabel:(isSend?'Sent':'Recv')+' · '+c.count+'x',
+      traceAddr:c.address,solscanUrl:'https://solscan.io/account/'+c.address,fullAddr:c.address,
+      dossier:{icon:'🔄',label:'Counterparty',value:(c.label||shortAddr(c.address))+' — '+c.count+'x txns',
+        level:c.label?'critical':'warning',detail:(isSend?'Outbound':'Inbound')+' transactions map social graph.',
+        link:'https://solscan.io/account/'+c.address,traceAddr:c.address}
     });
   });
 
-  // SNS (EXPOSURE zone, marker)
+  // SNS
   if(ap.domain){
     nodes.push({
-      zone:ZONE.EXPOSURE, ring:'inner', color:'#ff6644', arrowDir:'outward',
-      severity:3,
-      id:'sns', icon:'🔗',
-      label:ap.domain+'.sol', sublabel:'SNS Domain',
-      link:'https://solscan.io/account/'+address,
-      dossier:{ icon:'🔗', label:'Identity Anchor', value:ap.domain+'.sol',
-        level:'critical', detail:'Domain links wallet to searchable human identity.',
-        mitigation:'Use separate wallet for SNS.' }
+      zone:ZONE.EXPOSURE,ring:'inner',color:'#ff6644',arrowDir:'outward',severity:3,
+      id:'sns',icon:'🔗',label:ap.domain+'.sol',sublabel:'SNS Domain',
+      solscanUrl:'https://solscan.io/account/'+address,
+      dossier:{icon:'🔗',label:'Identity Anchor',value:ap.domain+'.sol',
+        level:'critical',detail:'Domain links wallet to searchable human identity.',mitigation:'Use separate wallet for SNS.'}
     });
   }
 
-  // ── OUTER RING: Inferred intelligence ──
+  // OUTER RING — inferred intelligence
 
-  // Whale
   const whaleR=gR('Whale Flagging');
   if(whaleR.value>20){
     nodes.push({
-      zone:ZONE.EXPOSURE, ring:'outer', color:COLORS.exposure, arrowDir:'none',
-      severity:whaleR.value>=60?3:2,
-      id:'whale', icon:'🐋',
-      label:ap.solBalance+' SOL', sublabel:'Whale Signal',
-      link:'https://solscan.io/account/'+address,
-      dossier:{ icon:'🐋', label:'Value Assessment', value:ap.solBalance+' SOL + '+(ap.tokenCount||0)+' tokens',
-        level:whaleR.value>=60?'critical':'warning', detail:'High-value target for phishing and SIM swaps.',
-        mitigation:'Split holdings across wallets.' }
+      zone:ZONE.EXPOSURE,ring:'outer',color:COLORS.exposure,arrowDir:'none',severity:whaleR.value>=60?3:2,
+      id:'whale',icon:'🐋',label:ap.solBalance+' SOL',sublabel:'Whale Signal',
+      solscanUrl:'https://solscan.io/account/'+address,
+      dossier:{icon:'🐋',label:'Value Assessment',value:ap.solBalance+' SOL + '+(ap.tokenCount||0)+' tokens',
+        level:whaleR.value>=60?'critical':'warning',detail:'High-value target for phishing and SIM swaps.',mitigation:'Split holdings across wallets.'}
     });
   }
 
-  // Pump.fun
   const pumpR=gR('Leaderboard Visibility');
   const pumpF=fF('Pump.fun');
   if(pumpR.value>10&&pumpF&&pumpF.type!=='ok'){
     nodes.push({
-      zone:ZONE.EXPOSURE, ring:'outer', color:'#ff6688', arrowDir:'none',
-      severity:pumpR.value>=60?3:2,
-      id:'pump', icon:'🏆',
-      label:'pump.fun', sublabel:pumpF.title.replace(/×/g,'x'),
-      link:pumpF.txSignature?'https://solscan.io/tx/'+pumpF.txSignature:'https://solscan.io/account/'+address,
-      dossier:{ icon:'🏆', label:'Leaderboard', value:pumpF.title,
-        level:pumpR.value>=60?'critical':'warning', detail:'Visible on high-traffic pump.fun leaderboards.',
-        mitigation:'Use burner wallet for pump.fun.' }
+      zone:ZONE.EXPOSURE,ring:'outer',color:'#ff6688',arrowDir:'none',severity:pumpR.value>=60?3:2,
+      id:'pump',icon:'🏆',label:'pump.fun',sublabel:pumpF.title.replace(/×/g,'x'),
+      solscanUrl:pumpF.txSignature?'https://solscan.io/tx/'+pumpF.txSignature:'https://solscan.io/account/'+address,
+      dossier:{icon:'🏆',label:'Leaderboard',value:pumpF.title,
+        level:pumpR.value>=60?'critical':'warning',detail:'Visible on high-traffic pump.fun leaderboards.',mitigation:'Use burner wallet for pump.fun.'}
     });
   }
 
-  // Copy-Trade / DEX
   const copyR=gR('Copy-Trade Risk');
   const copyF=fF('Copy-Trade')||fF('Trading')||fF('DEX');
   if(copyR.value>20&&copyF&&copyF.type!=='ok'){
     nodes.push({
-      zone:ZONE.PATTERN, ring:'outer', color:COLORS.pattern, arrowDir:'none',
-      severity:copyR.value>=60?3:2,
-      id:'dex', icon:'📊',
-      label:'DEX Trader', sublabel:'Copy-Targetable',
-      link:copyF.txSignature?'https://solscan.io/tx/'+copyF.txSignature:'https://solscan.io/account/'+address,
-      dossier:{ icon:'📊', label:'Strategy Exposure', value:copyF.detail||'Active DEX trader',
-        level:copyR.value>=60?'critical':'warning', detail:'Swap patterns visible to copy-trade bots.',
-        mitigation:'Rotate trading wallets.' }
+      zone:ZONE.PATTERN,ring:'outer',color:COLORS.pattern,arrowDir:'none',severity:copyR.value>=60?3:2,
+      id:'dex',icon:'📊',label:'DEX Trader',sublabel:'Copy-Targetable',
+      solscanUrl:copyF.txSignature?'https://solscan.io/tx/'+copyF.txSignature:'https://solscan.io/account/'+address,
+      dossier:{icon:'📊',label:'Strategy Exposure',value:copyF.detail||'Active DEX trader',
+        level:copyR.value>=60?'critical':'warning',detail:'Swap patterns visible to copy-trade bots.',mitigation:'Rotate trading wallets.'}
     });
   }
 
-  // Timing
   const behR=gR('Behavioural Pattern');
   if(behR.value>20){
     nodes.push({
-      zone:ZONE.PATTERN, ring:'outer', color:COLORS.pattern, arrowDir:'none',
-      severity:1,
-      id:'timing', icon:'⏰',
-      label:'Timing Pattern', sublabel:'Schedule Mapped',
-      link:'https://solscan.io/account/'+address,
-      dossier:{ icon:'⏰', label:'Activity Pattern', value:'Tx clustering detected — timezone identifiable',
-        level:'warning', detail:'Transaction timestamps reveal daily routine.',
-        mitigation:'Vary transaction timing.' }
+      zone:ZONE.PATTERN,ring:'outer',color:COLORS.pattern,arrowDir:'none',severity:1,
+      id:'timing',icon:'⏰',label:'Timing Pattern',sublabel:'Schedule Mapped',
+      solscanUrl:'https://solscan.io/account/'+address,
+      dossier:{icon:'⏰',label:'Activity Pattern',value:'Tx clustering detected — timezone identifiable',
+        level:'warning',detail:'Transaction timestamps reveal daily routine.',mitigation:'Vary transaction timing.'}
     });
   }
 
-  // Privacy (DEFENSE zone)
   const protos=priv.protocolsUsed||[];
   if(protos.length>0&&protos[0]!=='None detected'){
     nodes.push({
-      zone:ZONE.DEFENSE, ring:'outer', color:COLORS.defense, arrowDir:'none',
-      severity:0, isDefense:true,
-      id:'privacy', icon:'🛡️',
-      label:'Privacy Used', sublabel:protos.join(', ').slice(0,24),
-      link:'https://solscan.io/account/'+address,
-      dossier:{ icon:'🛡️', label:'Defense', value:protos.join(', '),
-        level:'safe', detail:'Partial chain breaks where protocols were used.' }
+      zone:ZONE.DEFENSE,ring:'outer',color:COLORS.defense,arrowDir:'none',severity:0,isDefense:true,
+      id:'privacy',icon:'🛡️',label:'Privacy Used',sublabel:protos.join(', ').slice(0,24),
+      solscanUrl:'https://solscan.io/account/'+address,
+      dossier:{icon:'🛡️',label:'Defense',value:protos.join(', '),level:'safe',detail:'Partial chain breaks where protocols were used.'}
     });
   }
 
   return nodes;
 }
 
-// ─── POSITION NODES in concentric rings by zone ───
-function positionNodes(nodes, W, H){
-  const cx=W/2, cy=H/2;
-
-  // Count nodes per zone to distribute angles
+// ─── POSITION ───
+function positionNodes(nodes,W,H){
+  const cx=W/2,cy=H/2;
   const zoneNodes={};
+  nodes.forEach(n=>{const k=n.zone+'_'+n.ring;if(!zoneNodes[k])zoneNodes[k]=[];zoneNodes[k].push(n)});
   nodes.forEach(n=>{
-    const key=n.zone+'_'+n.ring;
-    if(!zoneNodes[key])zoneNodes[key]=[];
-    zoneNodes[key].push(n);
-  });
-
-  nodes.forEach(n=>{
-    const key=n.zone+'_'+n.ring;
-    const group=zoneNodes[key];
-    const idx=group.indexOf(n);
-    const count=group.length;
+    const k=n.zone+'_'+n.ring;
+    const group=zoneNodes[k];
+    const idx=group.indexOf(n),count=group.length;
     const za=ZONE_ANGLES[n.zone];
     if(!za){n.x=cx;n.y=cy;return}
-
-    // Spread nodes evenly within zone angle range
-    const angleRange=za.end-za.start;
-    const angle=za.start + (count===1 ? angleRange/2 : (idx/(count-1))*angleRange);
+    const range=za.end-za.start;
+    const angle=za.start+(count===1?range/2:(idx/(count-1))*range);
     const r=n.ring==='inner'?RING_R.inner:RING_R.outer;
-
-    n.x=cx+r*Math.cos(angle);
-    n.y=cy+r*Math.sin(angle);
-    n.angle=angle;
+    n.x=cx+r*Math.cos(angle);n.y=cy+r*Math.sin(angle);n.angle=angle;
   });
-
   return nodes;
 }
 
-// ─── ANIMATE EVERYTHING ───
-async function animateAll(address, rawNodes, data){
+// ─── ANIMATE ───
+async function animateAll(address,rawNodes,data,abort){
   const svg=document.getElementById('graphSvg');
-  const W=700, H=700;
-  const cx=W/2, cy=H/2;
+  const W=700,H=700,cx=W/2,cy=H/2;
   svg.innerHTML='';
 
   const positioned=positionNodes(rawNodes,W,H);
 
   // Defs
   const defs=svgEl('defs');
-  defs.innerHTML=`
-    <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    <marker id="arrow-out" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="var(--text-muted)" opacity="0.6"/></marker>
-    <marker id="arrow-in" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><path d="M8,0 L0,3 L8,6" fill="var(--text-muted)" opacity="0.6"/></marker>
-  `;
-  // Per-color arrow markers
+  defs.innerHTML='<filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
   Object.entries(COLORS).forEach(([k,c])=>{
     defs.innerHTML+=`<marker id="arr-${k}" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="${c}" opacity="0.7"/></marker>`;
     defs.innerHTML+=`<marker id="arrin-${k}" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><path d="M8,0 L0,3 L8,6" fill="${c}" opacity="0.7"/></marker>`;
@@ -479,59 +456,37 @@ async function animateAll(address, rawNodes, data){
   svg.appendChild(defs);
 
   // Grid
-  const grid=svgEl('g');
-  grid.setAttribute('opacity','0.03');
+  const grid=svgEl('g');grid.setAttribute('opacity','0.03');
   for(let x=0;x<=W;x+=50)grid.innerHTML+=`<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="${COLORS.center}" stroke-width="0.5"/>`;
   for(let y=0;y<=H;y+=50)grid.innerHTML+=`<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="${COLORS.center}" stroke-width="0.5"/>`;
   svg.appendChild(grid);
 
   // Ring guides
   const rings=svgEl('g');
-  rings.innerHTML=`
-    <circle cx="${cx}" cy="${cy}" r="${RING_R.inner}" fill="none" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.15"/>
-    <circle cx="${cx}" cy="${cy}" r="${RING_R.outer}" fill="none" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.1"/>
-  `;
+  rings.innerHTML=`<circle cx="${cx}" cy="${cy}" r="${RING_R.inner}" fill="none" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.15"/>
+    <circle cx="${cx}" cy="${cy}" r="${RING_R.outer}" fill="none" stroke="var(--text-muted)" stroke-width="0.5" stroke-dasharray="4 8" opacity="0.1"/>`;
   svg.appendChild(rings);
 
   // Zone labels
   const zoneLabels=svgEl('g');
-  const zlData=[
-    {zone:ZONE.ORIGIN,label:'ORIGIN TRACE',angle:-2.4},
-    {zone:ZONE.KYC,label:'KYC BRIDGE',angle:-0.8},
-    {zone:ZONE.EXPOSURE,label:'PUBLIC EXPOSURE',angle:0.1},
-    {zone:ZONE.PATTERN,label:'PATTERN ANALYSIS',angle:1.0},
-    {zone:ZONE.SOCIAL,label:'SOCIAL GRAPH',angle:2.0},
-    {zone:ZONE.DEFENSE,label:'DEFENSE',angle:2.9},
-  ];
-  // Only show labels for zones that have nodes
   const activeZones=new Set(positioned.map(n=>n.zone));
-  zlData.forEach(zl=>{
-    if(!activeZones.has(zl.zone))return;
-    const lr=RING_R.outer+30;
-    const lx=cx+lr*Math.cos(zl.angle);
-    const ly=cy+lr*Math.sin(zl.angle);
-    const t=svgEl('text');
-    t.setAttribute('x',lx);t.setAttribute('y',ly);
-    t.setAttribute('text-anchor','middle');
-    t.setAttribute('font-family','var(--mono)');
-    t.setAttribute('font-size','8');
-    t.setAttribute('fill','var(--text-muted)');
-    t.setAttribute('letter-spacing','2');
-    t.textContent=zl.label;
-    zoneLabels.appendChild(t);
+  [{z:ZONE.ORIGIN,l:'ORIGIN TRACE',a:-2.4},{z:ZONE.KYC,l:'KYC BRIDGE',a:-0.8},{z:ZONE.EXPOSURE,l:'PUBLIC EXPOSURE',a:0.1},{z:ZONE.PATTERN,l:'PATTERN ANALYSIS',a:1.0},{z:ZONE.SOCIAL,l:'SOCIAL GRAPH',a:2.0},{z:ZONE.DEFENSE,l:'DEFENSE',a:2.9}].forEach(zl=>{
+    if(!activeZones.has(zl.z))return;
+    const lr=RING_R.outer+30,lx=cx+lr*Math.cos(zl.a),ly=cy+lr*Math.sin(zl.a);
+    const t=svgEl('text');t.setAttribute('x',lx);t.setAttribute('y',ly);t.setAttribute('text-anchor','middle');
+    t.setAttribute('font-family','var(--mono)');t.setAttribute('font-size','8');t.setAttribute('fill','var(--text-muted)');t.setAttribute('letter-spacing','2');
+    t.textContent=zl.l;zoneLabels.appendChild(t);
   });
   svg.appendChild(zoneLabels);
 
-  // Layers
   const edgesLayer=svgEl('g');svg.appendChild(edgesLayer);
   const nodesLayer=svgEl('g');svg.appendChild(nodesLayer);
 
   // ── CENTER NODE ──
   showOwl(OWL_QUIPS[0]);
-  await delay(300);
+  await delay(300);if(abort.cancel)return;
 
-  const cg=svgEl('g');
-  cg.style.cursor='pointer';
+  const cg=svgEl('g');cg.style.cursor='pointer';
   cg.innerHTML=`
     <circle cx="${cx}" cy="${cy}" r="${CENTER_R+14}" fill="none" stroke="${COLORS.center}" stroke-width="1" opacity="0.12">
       <animate attributeName="r" values="${CENTER_R+14};${CENTER_R+24};${CENTER_R+14}" dur="3s" repeatCount="indefinite"/>
@@ -540,180 +495,177 @@ async function animateAll(address, rawNodes, data){
     <circle cx="${cx}" cy="${cy}" r="${CENTER_R}" fill="rgba(240,165,0,0.06)" stroke="${COLORS.center}" stroke-width="2.5" filter="url(#glow)"/>
     <text x="${cx}" y="${cy-6}" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="${COLORS.center}" font-weight="700">TARGET</text>
     <text x="${cx}" y="${cy+7}" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="var(--text-dim)">${shortAddr(address)}</text>
-    <text x="${cx}" y="${cy+18}" text-anchor="middle" font-family="var(--mono)" font-size="7" fill="var(--text-muted)">${data.score}/100</text>
-  `;
-  cg.onclick=()=>window.open('https://solscan.io/account/'+address,'_blank');
-  cg.onmouseenter=e=>showTooltip(e,'Target Wallet',address,'Lens Score: '+data.score+'/100 — '+data.verdict,'Click to view on Solscan');
+    <text x="${cx}" y="${cy+18}" text-anchor="middle" font-family="var(--mono)" font-size="7" fill="var(--text-muted)">${data.score}/100</text>`;
+  cg.oncontextmenu=e=>{e.preventDefault();window.open('https://solscan.io/account/'+address,'_blank')};
+  cg.onmouseenter=e=>showTooltip(e,'Target Wallet',address,'Score: '+data.score+'/100 — '+data.verdict,'Right-click → Solscan');
   cg.onmouseleave=hideTooltip;
   nodesLayer.appendChild(cg);
 
-  await delay(500);
+  await delay(500);if(abort.cancel)return;
 
-  // ── ANIMATE NODES sequentially ──
+  // ── ANIMATE EACH NODE ──
   const dossierEl=document.getElementById('dossierEntries');
 
   for(let i=0;i<positioned.length;i++){
+    if(abort.cancel)return;
     const node=positioned[i];
     if(i%2===0){const qi=Math.min(Math.floor(i/2)+1,OWL_QUIPS.length-1);showOwl(OWL_QUIPS[qi])}
 
     const nr=node.ring==='inner'?NODE_R.inner:NODE_R.outer;
-
-    // Calculate edge endpoints on circle perimeters
-    const dx=node.x-cx, dy=node.y-cy;
-    const dist=Math.sqrt(dx*dx+dy*dy);
-    const ux=dx/dist, uy=dy/dist;
-
-    // Start point: perimeter of center circle
-    const sx=cx+ux*CENTER_R, sy=cy+uy*CENTER_R;
-    // End point: perimeter of target node circle
-    const ex=node.x-ux*nr, ey=node.y-uy*nr;
-
-    // Severity determines line thickness
-    const sw=[1, 1.5, 2, 3][node.severity]||1.5;
-
-    // Find arrow marker color key
+    const dx=node.x-cx,dy=node.y-cy,dist=Math.sqrt(dx*dx+dy*dy),ux=dx/dist,uy=dy/dist;
+    const cPerim_x=cx+ux*CENTER_R,cPerim_y=cy+uy*CENTER_R;
+    const nPerim_x=node.x-ux*nr,nPerim_y=node.y-uy*nr;
+    const sw=[1,1.5,2,3][node.severity]||1.5;
     const colorKey=Object.entries(COLORS).find(([k,v])=>v===node.color);
     const ck=colorKey?colorKey[0]:'center';
 
-    // ── Draw edge (animated line growth) ──
-    const edgeLine=svgEl('line');
-    edgeLine.setAttribute('x1',sx);edgeLine.setAttribute('y1',sy);
-    edgeLine.setAttribute('x2',sx);edgeLine.setAttribute('y2',sy); // starts at zero length
-    edgeLine.setAttribute('stroke',node.color);
-    edgeLine.setAttribute('stroke-width',sw);
-    edgeLine.setAttribute('opacity','0.7');
-    if(node.severity<2){edgeLine.setAttribute('stroke-dasharray','5 4')}
-    // Arrow direction
-    if(node.arrowDir==='outward')edgeLine.setAttribute('marker-end','url(#arr-'+ck+')');
-    if(node.arrowDir==='inward')edgeLine.setAttribute('marker-start','url(#arrin-'+ck+')');
+    if(node.arrowDir==='inward'){
+      // INWARD: node appears first, then line grows FROM node TOWARD center
 
-    // Glow line behind
-    const glowLine=svgEl('line');
-    glowLine.setAttribute('x1',sx);glowLine.setAttribute('y1',sy);
-    glowLine.setAttribute('x2',sx);glowLine.setAttribute('y2',sy);
-    glowLine.setAttribute('stroke',node.color);
-    glowLine.setAttribute('stroke-width',sw+3);
-    glowLine.setAttribute('opacity','0');
-    glowLine.setAttribute('filter','url(#glow)');
+      // Draw node first
+      const ng=makeNodeGroup(node,nr);
+      nodesLayer.appendChild(ng);
+      ng.style.opacity='0';ng.style.transform='scale(0)';ng.style.transformOrigin=node.x+'px '+node.y+'px';
+      ng.style.transition='opacity 0.35s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1)';
+      await delay(50);
+      ng.style.opacity='1';ng.style.transform='scale(1)';
+      await delay(300);if(abort.cancel)return;
 
-    edgesLayer.appendChild(glowLine);
-    edgesLayer.appendChild(edgeLine);
+      // Draw edge: starts at node perimeter, grows toward center perimeter
+      const glowLine=makeLine(nPerim_x,nPerim_y,nPerim_x,nPerim_y,node.color,sw+3,true);
+      const edgeLine=makeLine(nPerim_x,nPerim_y,nPerim_x,nPerim_y,node.color,sw,false);
+      if(node.severity<2)edgeLine.setAttribute('stroke-dasharray','5 4');
+      edgeLine.setAttribute('marker-end','url(#arr-'+ck+')');
+      edgesLayer.appendChild(glowLine);edgesLayer.appendChild(edgeLine);
 
-    // Animate line growing from center to node
-    await animateLine(edgeLine, sx, sy, ex, ey, 400);
-    await animateLine(glowLine, sx, sy, ex, ey, 300);
-    glowLine.setAttribute('opacity','0.15');
+      await animateLine(edgeLine,nPerim_x,nPerim_y,cPerim_x,cPerim_y,400);
+      await animateLine(glowLine,nPerim_x,nPerim_y,cPerim_x,cPerim_y,300);
+      glowLine.setAttribute('opacity','0.15');
 
-    // Edge label at midpoint
-    const mx=(sx+ex)/2, my=(sy+ey)/2;
-    const elbl=svgEl('text');
-    elbl.setAttribute('x',mx);elbl.setAttribute('y',my-6);
-    elbl.setAttribute('text-anchor','middle');
-    elbl.setAttribute('font-family','var(--mono)');elbl.setAttribute('font-size','7.5');
-    elbl.setAttribute('fill',node.color);elbl.setAttribute('opacity','0.6');
-    elbl.textContent=node.sublabel||'';
-    edgesLayer.appendChild(elbl);
+    } else {
+      // OUTWARD or NONE: line grows FROM center TOWARD node, then node pops in
 
-    // ── Draw node circle (pops in at end of line) ──
-    const ng=svgEl('g');
-    ng.style.cursor='pointer';
-    ng.style.opacity='0';
-    ng.innerHTML=`
-      <circle cx="${node.x}" cy="${node.y}" r="${nr+6}" fill="none" stroke="${node.color}" stroke-width="0.8" opacity="0.12"/>
-      <circle class="node-ring" cx="${node.x}" cy="${node.y}" r="${nr}" fill="${node.color}" fill-opacity="${node.isDefense?'0.12':'0.06'}" stroke="${node.color}" stroke-width="${node.severity>=3?2:1.2}" filter="url(#glow)"/>
-      <text x="${node.x}" y="${node.y-3}" text-anchor="middle" font-family="var(--mono)" font-size="${nr>20?'9':'8'}" fill="${node.color}" font-weight="600">${truncate(node.label,16)}</text>
-      <text x="${node.x}" y="${node.y+9}" text-anchor="middle" font-family="var(--mono)" font-size="7" fill="var(--text-muted)">${node.icon}</text>
-    `;
-    ng.onclick=()=>{if(node.link)window.open(node.link,'_blank')};
-    ng.onmouseenter=e=>showTooltip(e,node.icon+' '+node.sublabel,node.fullAddr||node.label,node.dossier?.detail||'','Click to view on Solscan');
-    ng.onmouseleave=hideTooltip;
-    nodesLayer.appendChild(ng);
+      const glowLine=makeLine(cPerim_x,cPerim_y,cPerim_x,cPerim_y,node.color,sw+3,true);
+      const edgeLine=makeLine(cPerim_x,cPerim_y,cPerim_x,cPerim_y,node.color,sw,false);
+      if(node.severity<2)edgeLine.setAttribute('stroke-dasharray','5 4');
+      if(node.arrowDir==='outward')edgeLine.setAttribute('marker-end','url(#arr-'+ck+')');
+      edgesLayer.appendChild(glowLine);edgesLayer.appendChild(edgeLine);
 
-    // Pop-in animation
-    ng.style.transition='opacity 0.35s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1)';
-    ng.style.transformOrigin=node.x+'px '+node.y+'px';
-    ng.style.transform='scale(0)';
-    await delay(50);
-    ng.style.opacity='1';
-    ng.style.transform='scale(1)';
+      await animateLine(edgeLine,cPerim_x,cPerim_y,nPerim_x,nPerim_y,400);
+      await animateLine(glowLine,cPerim_x,cPerim_y,nPerim_x,nPerim_y,300);
+      glowLine.setAttribute('opacity','0.15');
+      if(abort.cancel)return;
 
-    // ── Add dossier entry ──
+      // Node pops in at end of line
+      const ng=makeNodeGroup(node,nr);
+      nodesLayer.appendChild(ng);
+      ng.style.opacity='0';ng.style.transform='scale(0)';ng.style.transformOrigin=node.x+'px '+node.y+'px';
+      ng.style.transition='opacity 0.35s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1)';
+      await delay(50);
+      ng.style.opacity='1';ng.style.transform='scale(1)';
+    }
+
+    // Edge label
+    const mx=(cPerim_x+nPerim_x)/2,my=(cPerim_y+nPerim_y)/2;
+    const elbl=svgEl('text');elbl.setAttribute('x',mx);elbl.setAttribute('y',my-6);
+    elbl.setAttribute('text-anchor','middle');elbl.setAttribute('font-family','var(--mono)');
+    elbl.setAttribute('font-size','7.5');elbl.setAttribute('fill',node.color);elbl.setAttribute('opacity','0.6');
+    elbl.textContent=node.sublabel||'';edgesLayer.appendChild(elbl);
+
+    // Dossier entry
     if(node.dossier){
       document.getElementById('dossierEmpty').style.display='none';
       const entry=document.createElement('div');
       entry.className='d-entry';
-      let linkHtml=node.dossier.link?`<a class="d-entry-link" href="${node.dossier.link}" target="_blank" rel="noopener">View on Solscan →</a>`:'';
+      let linkHtml=node.dossier.link?`<a class="d-entry-link" href="${node.dossier.link}" target="_blank" rel="noopener">Solscan →</a>`:'';
+      let traceBtn=node.dossier.traceAddr?`<button class="d-action-trace" onclick="traceAddress('${node.dossier.traceAddr}')">Trace this address →</button>`:'';
       let mitHtml=node.dossier.mitigation?`<div class="d-mitigation"><span>🛡️</span>${node.dossier.mitigation}</div>`:'';
       entry.innerHTML=`
         <div class="d-entry-header"><span class="d-entry-icon">${node.dossier.icon}</span><span class="d-entry-label">${node.dossier.label}</span></div>
         <div class="d-entry-value ${node.dossier.level}">${node.dossier.value}</div>
         <div class="d-entry-detail">${node.dossier.detail}</div>
-        ${linkHtml}${mitHtml}
-      `;
+        <div class="d-entry-actions">${linkHtml}${traceBtn}</div>${mitHtml}`;
       dossierEl.appendChild(entry);
-      await delay(80);
-      entry.classList.add('revealed');
+      await delay(80);entry.classList.add('revealed');
     }
 
-    await delay(350);
+    await delay(350);if(abort.cancel)return;
   }
 
-  // ── CTA ──
+  // CTA
   await delay(400);
   const crits=positioned.filter(n=>n.severity>=3).length;
-  document.getElementById('ctaDesc').textContent=crits+' critical exposure node'+(crits!==1?'s':'')+' discovered. Each is a link an attacker can follow. Break the chain.';
+  document.getElementById('ctaDesc').textContent=crits+' critical exposure node'+(crits!==1?'s':'')+' discovered. Each is a link an attacker can follow.';
   document.getElementById('ctaSection').classList.add('revealed');
   showOwl(OWL_QUIPS[OWL_QUIPS.length-1]);
 }
 
-// ─── ANIMATE LINE from (x1,y1) to (x2,y2) ───
-function animateLine(line, x1, y1, x2, y2, duration){
+// ─── MAKE NODE SVG GROUP ───
+function makeNodeGroup(node,nr){
+  const ng=svgEl('g');ng.style.cursor='pointer';
+  ng.innerHTML=`
+    <circle cx="${node.x}" cy="${node.y}" r="${nr+6}" fill="none" stroke="${node.color}" stroke-width="0.8" opacity="0.12"/>
+    <circle class="node-ring" cx="${node.x}" cy="${node.y}" r="${nr}" fill="${node.color}" fill-opacity="${node.isDefense?'0.12':'0.06'}" stroke="${node.color}" stroke-width="${node.severity>=3?2:1.2}" filter="url(#glow)"/>
+    <text x="${node.x}" y="${node.y-3}" text-anchor="middle" font-family="var(--mono)" font-size="${nr>20?'9':'8'}" fill="${node.color}" font-weight="600">${truncate(node.label,16)}</text>
+    <text x="${node.x}" y="${node.y+9}" text-anchor="middle" font-family="var(--mono)" font-size="7" fill="var(--text-muted)">${node.icon}</text>`;
+
+  // Left click: trace this address (if it has one)
+  if(node.traceAddr){
+    ng.onclick=()=>traceAddress(node.traceAddr);
+  }
+  // Right click: Solscan
+  ng.oncontextmenu=e=>{e.preventDefault();if(node.solscanUrl)window.open(node.solscanUrl,'_blank')};
+  ng.onmouseenter=e=>showTooltip(e,node.icon+' '+node.sublabel,node.fullAddr||node.label,node.dossier?.detail||'',node.traceAddr?'Click to trace · Right-click → Solscan':'Right-click → Solscan');
+  ng.onmouseleave=hideTooltip;
+  return ng;
+}
+
+// ─── MAKE LINE ───
+function makeLine(x1,y1,x2,y2,color,sw,isGlow){
+  const l=svgEl('line');
+  l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+  l.setAttribute('stroke',color);l.setAttribute('stroke-width',sw);
+  l.setAttribute('opacity',isGlow?'0':'0.7');
+  if(isGlow)l.setAttribute('filter','url(#glow)');
+  return l;
+}
+
+// ─── ANIMATE LINE ───
+function animateLine(line,x1,y1,x2,y2,dur){
   return new Promise(resolve=>{
     const start=performance.now();
     function frame(now){
-      const t=Math.min((now-start)/duration,1);
-      const ease=t<0.5?2*t*t:(1-Math.pow(-2*t+2,2)/2); // easeInOutQuad
-      line.setAttribute('x2', x1+(x2-x1)*ease);
-      line.setAttribute('y2', y1+(y2-y1)*ease);
-      if(t<1)requestAnimationFrame(frame);
-      else resolve();
+      const t=Math.min((now-start)/dur,1);
+      const e=t<0.5?2*t*t:(1-Math.pow(-2*t+2,2)/2);
+      line.setAttribute('x2',x1+(x2-x1)*e);
+      line.setAttribute('y2',y1+(y2-y1)*e);
+      if(t<1)requestAnimationFrame(frame);else resolve();
     }
     requestAnimationFrame(frame);
   });
 }
 
-// ─── SVG HELPERS ───
+// ─── SVG HELPER ───
 function svgEl(tag){return document.createElementNS('http://www.w3.org/2000/svg',tag)}
 
 // ─── LEGEND ───
 function renderLegend(nodes){
-  const seen=new Map();
-  seen.set('center',{color:COLORS.center,label:'Target Wallet'});
-  nodes.forEach(n=>{
-    const key=n.zone;
-    if(!seen.has(key))seen.set(key,{color:n.color,label:n.sublabel||n.label});
-  });
-  document.getElementById('graphLegend').innerHTML=[...seen.values()].map(v=>
-    `<div class="legend-item"><div class="legend-dot" style="background:${v.color}"></div>${v.label}</div>`
-  ).join('');
+  const seen=new Map();seen.set('center',{color:COLORS.center,label:'Target Wallet'});
+  nodes.forEach(n=>{const k=n.zone;if(!seen.has(k))seen.set(k,{color:n.color,label:n.sublabel||n.label})});
+  document.getElementById('graphLegend').innerHTML=[...seen.values()].map(v=>`<div class="legend-item"><div class="legend-dot" style="background:${v.color}"></div>${v.label}</div>`).join('');
 }
 
 // ─── SUMMARY ───
 function renderSummary(address,data){
-  const s=data.score||0;
-  const cls=s<25?'score-low':s<50?'score-mid':'score-high';
-  const ap=data.addressProfile||{};
+  const s=data.score||0,cls=s<25?'score-low':s<50?'score-mid':'score-high',ap=data.addressProfile||{};
   document.getElementById('walletSummary').innerHTML=
-    '<div><div class="wallet-addr">'+shortAddr(address)+'</div>'+
-    '<div class="wallet-meta">'+(ap.txnCount||0)+' txns · '+(ap.walletAge!=null?ap.walletAge:'?')+' days old · '+(ap.solBalance||'0')+' SOL</div></div>'+
+    '<div><div class="wallet-addr">'+shortAddr(address)+'</div><div class="wallet-meta">'+(ap.txnCount||0)+' txns · '+(ap.walletAge!=null?ap.walletAge:'?')+' days old · '+(ap.solBalance||'0')+' SOL</div></div>'+
     '<div class="wallet-score"><span class="wallet-score-label">Lens Score</span><span class="wallet-score-val '+cls+'">'+s+'</span></div>';
 }
 
 // ─── TOOLTIP ───
 function showTooltip(e,label,addr,detail,cta){
-  const tt=document.getElementById('tooltip');
-  const wrap=document.getElementById('graphWrap');
-  const rect=wrap.getBoundingClientRect();
+  const tt=document.getElementById('tooltip'),wrap=document.getElementById('graphWrap'),rect=wrap.getBoundingClientRect();
   tt.innerHTML=`<div class="tt-label">${label}</div><div class="tt-addr">${addr}</div><div class="tt-detail">${detail}</div>${cta?'<div class="tt-cta">'+cta+'</div>':''}`;
   tt.classList.add('show');
   tt.style.left=Math.min(e.clientX-rect.left+12,rect.width-290)+'px';
@@ -726,13 +678,18 @@ function shortAddr(a){return a?a.slice(0,6)+'...'+a.slice(-4):''}
 function truncate(s,n){return s.length>n?s.slice(0,n-1)+'…':s}
 function setStatus(msg,err){const e=document.getElementById('statusLine');e.textContent=msg;e.className='status-line'+(err?' error':'')}
 function delay(ms){return new Promise(r=>setTimeout(r,ms))}
-function resetUI(){
-  document.getElementById('mainContainer').classList.remove('active');
+function clearGraph(){
   document.getElementById('ctaSection').classList.remove('revealed');
-  document.getElementById('owlObserver').classList.remove('active');
-  document.getElementById('owlBubble').classList.remove('show');
   document.getElementById('dossierEntries').innerHTML='';
   document.getElementById('dossierEmpty').style.display='block';
+  document.getElementById('dossierEmpty').textContent='Scanning...';
+  document.getElementById('graphSvg').innerHTML='';
+}
+function resetUI(){
+  document.getElementById('mainContainer').classList.remove('active');
+  document.getElementById('owlObserver').classList.remove('active');
+  document.getElementById('owlBubble').classList.remove('show');
+  clearGraph();
 }
 let owlTimeout;
 function showOwl(text){
