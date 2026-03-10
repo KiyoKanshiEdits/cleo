@@ -284,7 +284,7 @@ async function runAttackPath() {
   resetUI();
 
   try {
-    const res = await fetch('/api/score?address=' + encodeURIComponent(address));
+    const res = await fetch('/api/score', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ walletAddress: address }) });
     if (!res.ok) throw new Error('API returned ' + res.status);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
