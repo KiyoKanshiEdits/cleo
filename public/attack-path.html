@@ -14,6 +14,7 @@
   --red:#ff4444;--red-dim:rgba(255,68,68,0.15);--red-glow:rgba(255,68,68,0.3);
   --green:#00cc88;--green-dim:rgba(0,204,136,0.15);
   --blue:#4488ff;--purple:#9966ff;--orange:#ff8844;--pink:#ff6688;
+  --cyan:#00ddff;
   --text:#e8e8ef;--text-dim:rgba(232,232,239,0.5);--text-muted:rgba(232,232,239,0.3);
   --border:rgba(240,165,0,0.12);
   --mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;
@@ -42,7 +43,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;background:rep
 .status-line{text-align:center;margin-top:16px;font-family:var(--mono);font-size:12px;color:var(--text-dim);min-height:18px}
 .status-line.error{color:var(--red)}
 
-/* Breadcrumb trail */
 .breadcrumb{display:flex;align-items:center;gap:6px;padding:10px 0;flex-wrap:wrap;margin-bottom:12px;min-height:32px}
 .bc-item{font-family:var(--mono);font-size:10px;color:var(--text-dim);cursor:pointer;padding:3px 8px;border:1px solid var(--border);border-radius:3px;transition:color 0.2s,border-color 0.2s;text-decoration:none}
 .bc-item:hover{color:var(--amber);border-color:var(--amber)}
@@ -76,7 +76,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;background:rep
 .legend-item{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:9px;color:var(--text-dim)}
 .legend-dot{width:8px;height:8px;border-radius:50%}
 
-/* Interaction hint */
 .graph-hint{font-family:var(--mono);font-size:9px;color:var(--text-muted);text-align:center;padding:8px;border-top:1px solid var(--border)}
 
 .dossier{background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:20px;position:sticky;top:24px}
@@ -95,6 +94,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;background:rep
 .d-entry-value.critical{color:var(--red)}
 .d-entry-value.warning{color:var(--amber)}
 .d-entry-value.safe{color:var(--green)}
+.d-entry-value.prev{color:var(--cyan)}
 .d-entry-detail{font-family:var(--mono);font-size:10px;color:var(--text-dim);line-height:1.5}
 .d-entry-link{color:var(--amber);text-decoration:none;font-family:var(--mono);font-size:9px;border-bottom:1px dashed rgba(240,165,0,0.3)}
 .d-entry-link:hover{border-color:var(--amber)}
@@ -197,15 +197,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;background:rep
 </div>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════
-   ATTACK PATH v3
-   - Click any node to re-center and trace that address
-   - Right-click any node for Solscan
-   - Inward arrows: outer node forms first, line grows toward center
-   - Outward arrows: line grows from center, node forms at end
-   - Breadcrumb trail tracks investigation path
-   ═══════════════════════════════════════════════════════════════ */
-
 const ZONE={ORIGIN:'origin',KYC:'kyc',EXPOSURE:'exposure',PATTERN:'pattern',SOCIAL:'social',DEFENSE:'defense'};
 const ZONE_ANGLES={
   [ZONE.ORIGIN]:{start:-2.8,end:-2.0},
@@ -215,9 +206,10 @@ const ZONE_ANGLES={
   [ZONE.SOCIAL]:{start:1.5,end:2.5},
   [ZONE.DEFENSE]:{start:2.6,end:3.2},
 };
-const COLORS={center:'#f0a500',origin:'#44aaff',kyc:'#ff4444',exposure:'#ff8844',pattern:'#9966ff',social:'#00cc88',defense:'#00cc88'};
+const COLORS={center:'#f0a500',origin:'#44aaff',kyc:'#ff4444',exposure:'#ff8844',pattern:'#9966ff',social:'#00cc88',defense:'#00cc88',prev:'#00ddff'};
 const NODE_R={inner:22,outer:18};
 const CENTER_R=32;
+const PREV_R=24;
 const RING_R={inner:170,outer:270};
 
 const OWL_QUIPS=[
@@ -230,22 +222,28 @@ const OWL_QUIPS=[
 ];
 
 let animating=false;
-let traceHistory=[];  // breadcrumb trail
-let currentAbort=null; // to cancel animation on re-trace
+let traceHistory=[];
+let currentAbort=null;
+// Track previous address for "where you came from" node
+let previousAddress=null;
 
 (function(){const a=new URLSearchParams(location.search).get('address');if(a){document.getElementById('addressInput').value=a;setTimeout(traceAddress,100)}})();
 document.getElementById('addressInput').addEventListener('keydown',e=>{if(e.key==='Enter')traceAddress()});
 
-// ─── PUBLIC: trace an address (can be called from node clicks) ───
 async function traceAddress(address){
   if(!address)address=document.getElementById('addressInput').value.trim();
   if(!address||animating)return;
   if(!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)){setStatus('Invalid Solana address',true);return}
 
-  // Cancel any in-progress animation
   if(currentAbort)currentAbort.cancel=true;
   const abort={cancel:false};
   currentAbort=abort;
+
+  // Track previous address before updating history
+  const currentIdx=traceHistory.length>0?traceHistory.length-1:-1;
+  if(currentIdx>=0&&traceHistory[currentIdx]!==address){
+    previousAddress=traceHistory[currentIdx];
+  }
 
   animating=true;
   document.getElementById('scanBtn').disabled=true;
@@ -259,7 +257,6 @@ async function traceAddress(address){
     if(data.error)throw new Error(data.error);
     if(abort.cancel)return;
 
-    // Update breadcrumb
     if(!traceHistory.includes(address))traceHistory.push(address);
     renderBreadcrumb();
 
@@ -282,7 +279,6 @@ async function traceAddress(address){
   }
 }
 
-// ─── BREADCRUMB ───
 function renderBreadcrumb(){
   const el=document.getElementById('breadcrumb');
   el.innerHTML=traceHistory.map((addr,i)=>{
@@ -292,7 +288,6 @@ function renderBreadcrumb(){
   }).join('');
 }
 
-// ─── BUILD NODES ───
 function buildNodes(address,data){
   const nodes=[];
   const risks=data.risks||[];
@@ -302,9 +297,6 @@ function buildNodes(address,data){
   const gR=name=>(risks.find(r=>r.name===name)||{value:0,tier:'low'});
   const fF=kw=>findings.find(f=>f.title&&f.title.toLowerCase().includes(kw.toLowerCase()));
 
-  // INNER RING — direct on-chain evidence
-
-  // Funding sources (arrows INWARD — node forms first, line grows toward center)
   (ap.fundingSources||[]).slice(0,2).forEach((f,i)=>{
     if(f.isPrivacy)return;
     nodes.push({
@@ -317,7 +309,6 @@ function buildNodes(address,data){
     });
   });
 
-  // CEX (arrows OUTWARD)
   const cexAct=ap.cexActivity||[];
   if(cexAct.length>0){
     const cexF=fF('CEX')||fF('Exchange');
@@ -331,7 +322,6 @@ function buildNodes(address,data){
     });
   }
 
-  // Counterparties (arrows based on direction)
   const cpSeen=new Set();
   [...(ap.topSendTo||[]).slice(0,2),...(ap.topReceiveFrom||[]).slice(0,2)].forEach((c,i)=>{
     if(cpSeen.has(c.address))return;
@@ -347,7 +337,6 @@ function buildNodes(address,data){
     });
   });
 
-  // SNS
   if(ap.domain){
     nodes.push({
       zone:ZONE.EXPOSURE,ring:'inner',color:'#ff6644',arrowDir:'outward',severity:3,
@@ -357,8 +346,6 @@ function buildNodes(address,data){
         level:'critical',detail:'Domain links wallet to searchable human identity.',mitigation:'Use separate wallet for SNS.'}
     });
   }
-
-  // OUTER RING — inferred intelligence
 
   const whaleR=gR('Whale Flagging');
   if(whaleR.value>20){
@@ -419,7 +406,6 @@ function buildNodes(address,data){
   return nodes;
 }
 
-// ─── POSITION ───
 function positionNodes(nodes,W,H){
   const cx=W/2,cy=H/2;
   const zoneNodes={};
@@ -438,17 +424,17 @@ function positionNodes(nodes,W,H){
   return nodes;
 }
 
-// ─── ANIMATE ───
 async function animateAll(address,rawNodes,data,abort){
   const svg=document.getElementById('graphSvg');
   const W=700,H=700,cx=W/2,cy=H/2;
   svg.innerHTML='';
-
   const positioned=positionNodes(rawNodes,W,H);
 
   // Defs
   const defs=svgEl('defs');
   defs.innerHTML='<filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
+  // Add a stronger glow for previous node
+  defs.innerHTML+='<filter id="glow-prev"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
   Object.entries(COLORS).forEach(([k,c])=>{
     defs.innerHTML+=`<marker id="arr-${k}" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="${c}" opacity="0.7"/></marker>`;
     defs.innerHTML+=`<marker id="arrin-${k}" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto"><path d="M8,0 L0,3 L8,6" fill="${c}" opacity="0.7"/></marker>`;
@@ -481,6 +467,61 @@ async function animateAll(address,rawNodes,data,abort){
 
   const edgesLayer=svgEl('g');svg.appendChild(edgesLayer);
   const nodesLayer=svgEl('g');svg.appendChild(nodesLayer);
+
+  // ══════════════════════════════════════════════════
+  // PREVIOUS TARGET NODE — shows where you came from
+  // ══════════════════════════════════════════════════
+  if(previousAddress&&previousAddress!==address){
+    const prevX=cx, prevY=52; // top center, above the rings
+    const prevColor=COLORS.prev;
+
+    // Dashed line from previous node down to center
+    const pEdge=svgEl('line');
+    pEdge.setAttribute('x1',prevX);pEdge.setAttribute('y1',prevY+PREV_R);
+    pEdge.setAttribute('x2',cx);pEdge.setAttribute('y2',cy-CENTER_R);
+    pEdge.setAttribute('stroke',prevColor);pEdge.setAttribute('stroke-width','1.5');
+    pEdge.setAttribute('stroke-dasharray','6 4');pEdge.setAttribute('opacity','0.35');
+    edgesLayer.appendChild(pEdge);
+
+    // "Traced from" label on the line
+    const pmx=(prevX+cx)/2, pmy=(prevY+PREV_R+cy-CENTER_R)/2;
+    const plbl=svgEl('text');plbl.setAttribute('x',pmx+8);plbl.setAttribute('y',pmy);
+    plbl.setAttribute('text-anchor','start');plbl.setAttribute('font-family','var(--mono)');
+    plbl.setAttribute('font-size','7');plbl.setAttribute('fill',prevColor);plbl.setAttribute('opacity','0.5');
+    plbl.textContent='TRACED FROM';edgesLayer.appendChild(plbl);
+
+    // Previous node circle with distinct glow
+    const pg=svgEl('g');pg.style.cursor='pointer';
+    pg.innerHTML=`
+      <circle cx="${prevX}" cy="${prevY}" r="${PREV_R+10}" fill="none" stroke="${prevColor}" stroke-width="1" opacity="0.08">
+        <animate attributeName="opacity" values="0.08;0.2;0.08" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="${prevX}" cy="${prevY}" r="${PREV_R}" fill="${prevColor}" fill-opacity="0.06" stroke="${prevColor}" stroke-width="1.5" stroke-dasharray="4 3" filter="url(#glow-prev)"/>
+      <text x="${prevX}" y="${prevY-5}" text-anchor="middle" font-family="var(--mono)" font-size="7" fill="${prevColor}" font-weight="600" letter-spacing="1">PREVIOUS</text>
+      <text x="${prevX}" y="${prevY+7}" text-anchor="middle" font-family="var(--mono)" font-size="8" fill="${prevColor}" opacity="0.8">${shortAddr(previousAddress)}</text>
+    `;
+    pg.onclick=()=>traceAddress(previousAddress);
+    pg.oncontextmenu=e=>{e.preventDefault();window.open('https://solscan.io/account/'+previousAddress,'_blank')};
+    pg.onmouseenter=e=>showTooltip(e,'Previous Target',previousAddress,'The address you traced from. Click to go back.','Click to trace back · Right-click → Solscan');
+    pg.onmouseleave=hideTooltip;
+    nodesLayer.appendChild(pg);
+
+    // Dossier entry for previous
+    const dossierEl=document.getElementById('dossierEntries');
+    document.getElementById('dossierEmpty').style.display='none';
+    const prevEntry=document.createElement('div');
+    prevEntry.className='d-entry';
+    prevEntry.innerHTML=`
+      <div class="d-entry-header"><span class="d-entry-icon">↩️</span><span class="d-entry-label">Previous Target</span></div>
+      <div class="d-entry-value prev">${shortAddr(previousAddress)}</div>
+      <div class="d-entry-detail">You traced here from this address.</div>
+      <div class="d-entry-actions">
+        <a class="d-entry-link" href="https://solscan.io/account/${previousAddress}" target="_blank" rel="noopener">Solscan →</a>
+        <button class="d-action-trace" onclick="traceAddress('${previousAddress}')">← Trace back</button>
+      </div>`;
+    dossierEl.appendChild(prevEntry);
+    await delay(80);prevEntry.classList.add('revealed');
+  }
 
   // ── CENTER NODE ──
   showOwl(OWL_QUIPS[0]);
@@ -520,49 +561,40 @@ async function animateAll(address,rawNodes,data,abort){
     const ck=colorKey?colorKey[0]:'center';
 
     if(node.arrowDir==='inward'){
-      // INWARD: node appears first, then line grows FROM node TOWARD center
-
-      // Draw node first
       const ng=makeNodeGroup(node,nr);
       nodesLayer.appendChild(ng);
       ng.style.opacity='0';ng.style.transform='scale(0)';ng.style.transformOrigin=node.x+'px '+node.y+'px';
       ng.style.transition='opacity 0.35s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1)';
-      await delay(50);
-      ng.style.opacity='1';ng.style.transform='scale(1)';
+      await delay(50);ng.style.opacity='1';ng.style.transform='scale(1)';
       await delay(300);if(abort.cancel)return;
 
-      // Draw edge: starts at node perimeter, grows toward center perimeter
       const glowLine=makeLine(nPerim_x,nPerim_y,nPerim_x,nPerim_y,node.color,sw+3,true);
       const edgeLine=makeLine(nPerim_x,nPerim_y,nPerim_x,nPerim_y,node.color,sw,false);
       if(node.severity<2)edgeLine.setAttribute('stroke-dasharray','5 4');
       edgeLine.setAttribute('marker-end','url(#arr-'+ck+')');
       edgesLayer.appendChild(glowLine);edgesLayer.appendChild(edgeLine);
 
-      await animateLine(edgeLine,nPerim_x,nPerim_y,cPerim_x,cPerim_y,400);
-      await animateLine(glowLine,nPerim_x,nPerim_y,cPerim_x,cPerim_y,300);
+      await animateLineAnim(edgeLine,nPerim_x,nPerim_y,cPerim_x,cPerim_y,400);
+      await animateLineAnim(glowLine,nPerim_x,nPerim_y,cPerim_x,cPerim_y,300);
       glowLine.setAttribute('opacity','0.15');
 
     } else {
-      // OUTWARD or NONE: line grows FROM center TOWARD node, then node pops in
-
       const glowLine=makeLine(cPerim_x,cPerim_y,cPerim_x,cPerim_y,node.color,sw+3,true);
       const edgeLine=makeLine(cPerim_x,cPerim_y,cPerim_x,cPerim_y,node.color,sw,false);
       if(node.severity<2)edgeLine.setAttribute('stroke-dasharray','5 4');
       if(node.arrowDir==='outward')edgeLine.setAttribute('marker-end','url(#arr-'+ck+')');
       edgesLayer.appendChild(glowLine);edgesLayer.appendChild(edgeLine);
 
-      await animateLine(edgeLine,cPerim_x,cPerim_y,nPerim_x,nPerim_y,400);
-      await animateLine(glowLine,cPerim_x,cPerim_y,nPerim_x,nPerim_y,300);
+      await animateLineAnim(edgeLine,cPerim_x,cPerim_y,nPerim_x,nPerim_y,400);
+      await animateLineAnim(glowLine,cPerim_x,cPerim_y,nPerim_x,nPerim_y,300);
       glowLine.setAttribute('opacity','0.15');
       if(abort.cancel)return;
 
-      // Node pops in at end of line
       const ng=makeNodeGroup(node,nr);
       nodesLayer.appendChild(ng);
       ng.style.opacity='0';ng.style.transform='scale(0)';ng.style.transformOrigin=node.x+'px '+node.y+'px';
       ng.style.transition='opacity 0.35s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1)';
-      await delay(50);
-      ng.style.opacity='1';ng.style.transform='scale(1)';
+      await delay(50);ng.style.opacity='1';ng.style.transform='scale(1)';
     }
 
     // Edge label
@@ -592,7 +624,6 @@ async function animateAll(address,rawNodes,data,abort){
     await delay(350);if(abort.cancel)return;
   }
 
-  // CTA
   await delay(400);
   const crits=positioned.filter(n=>n.severity>=3).length;
   document.getElementById('ctaDesc').textContent=crits+' critical exposure node'+(crits!==1?'s':'')+' discovered. Each is a link an attacker can follow.';
@@ -600,7 +631,6 @@ async function animateAll(address,rawNodes,data,abort){
   showOwl(OWL_QUIPS[OWL_QUIPS.length-1]);
 }
 
-// ─── MAKE NODE SVG GROUP ───
 function makeNodeGroup(node,nr){
   const ng=svgEl('g');ng.style.cursor='pointer';
   ng.innerHTML=`
@@ -608,19 +638,13 @@ function makeNodeGroup(node,nr){
     <circle class="node-ring" cx="${node.x}" cy="${node.y}" r="${nr}" fill="${node.color}" fill-opacity="${node.isDefense?'0.12':'0.06'}" stroke="${node.color}" stroke-width="${node.severity>=3?2:1.2}" filter="url(#glow)"/>
     <text x="${node.x}" y="${node.y-3}" text-anchor="middle" font-family="var(--mono)" font-size="${nr>20?'9':'8'}" fill="${node.color}" font-weight="600">${truncate(node.label,16)}</text>
     <text x="${node.x}" y="${node.y+9}" text-anchor="middle" font-family="var(--mono)" font-size="7" fill="var(--text-muted)">${node.icon}</text>`;
-
-  // Left click: trace this address (if it has one)
-  if(node.traceAddr){
-    ng.onclick=()=>traceAddress(node.traceAddr);
-  }
-  // Right click: Solscan
+  if(node.traceAddr){ng.onclick=()=>traceAddress(node.traceAddr)}
   ng.oncontextmenu=e=>{e.preventDefault();if(node.solscanUrl)window.open(node.solscanUrl,'_blank')};
   ng.onmouseenter=e=>showTooltip(e,node.icon+' '+node.sublabel,node.fullAddr||node.label,node.dossier?.detail||'',node.traceAddr?'Click to trace · Right-click → Solscan':'Right-click → Solscan');
   ng.onmouseleave=hideTooltip;
   return ng;
 }
 
-// ─── MAKE LINE ───
 function makeLine(x1,y1,x2,y2,color,sw,isGlow){
   const l=svgEl('line');
   l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
@@ -630,8 +654,7 @@ function makeLine(x1,y1,x2,y2,color,sw,isGlow){
   return l;
 }
 
-// ─── ANIMATE LINE ───
-function animateLine(line,x1,y1,x2,y2,dur){
+function animateLineAnim(line,x1,y1,x2,y2,dur){
   return new Promise(resolve=>{
     const start=performance.now();
     function frame(now){
@@ -645,17 +668,16 @@ function animateLine(line,x1,y1,x2,y2,dur){
   });
 }
 
-// ─── SVG HELPER ───
 function svgEl(tag){return document.createElementNS('http://www.w3.org/2000/svg',tag)}
 
-// ─── LEGEND ───
 function renderLegend(nodes){
-  const seen=new Map();seen.set('center',{color:COLORS.center,label:'Target Wallet'});
+  const seen=new Map();
+  seen.set('center',{color:COLORS.center,label:'Target Wallet'});
+  if(previousAddress)seen.set('prev',{color:COLORS.prev,label:'Previous Target'});
   nodes.forEach(n=>{const k=n.zone;if(!seen.has(k))seen.set(k,{color:n.color,label:n.sublabel||n.label})});
   document.getElementById('graphLegend').innerHTML=[...seen.values()].map(v=>`<div class="legend-item"><div class="legend-dot" style="background:${v.color}"></div>${v.label}</div>`).join('');
 }
 
-// ─── SUMMARY ───
 function renderSummary(address,data){
   const s=data.score||0,cls=s<25?'score-low':s<50?'score-mid':'score-high',ap=data.addressProfile||{};
   document.getElementById('walletSummary').innerHTML=
@@ -663,7 +685,6 @@ function renderSummary(address,data){
     '<div class="wallet-score"><span class="wallet-score-label">Lens Score</span><span class="wallet-score-val '+cls+'">'+s+'</span></div>';
 }
 
-// ─── TOOLTIP ───
 function showTooltip(e,label,addr,detail,cta){
   const tt=document.getElementById('tooltip'),wrap=document.getElementById('graphWrap'),rect=wrap.getBoundingClientRect();
   tt.innerHTML=`<div class="tt-label">${label}</div><div class="tt-addr">${addr}</div><div class="tt-detail">${detail}</div>${cta?'<div class="tt-cta">'+cta+'</div>':''}`;
@@ -673,7 +694,6 @@ function showTooltip(e,label,addr,detail,cta){
 }
 function hideTooltip(){document.getElementById('tooltip').classList.remove('show')}
 
-// ─── HELPERS ───
 function shortAddr(a){return a?a.slice(0,6)+'...'+a.slice(-4):''}
 function truncate(s,n){return s.length>n?s.slice(0,n-1)+'…':s}
 function setStatus(msg,err){const e=document.getElementById('statusLine');e.textContent=msg;e.className='status-line'+(err?' error':'')}
